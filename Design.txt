@@ -1,0 +1,38 @@
+Datenblöcke:
+30 MB:
+    33.554.432 byte / 512 byte = 65536 Blöcke
+
+Superblock:
+-
+
+DMAP:
+    F: Free
+    A: Allocated
+
+    1 char pro Datenblock (char = byte)
+    65536 chars / 512 byte = 128 Blöcke
+
+FAT:
+    (unsigned short = 2 byte)
+    65536 Blöcke * unsigned short = 131072 byte
+    122880 byte / 512 byte = 256 Blöcke
+    
+    256 Addressen pro Block
+    Finde Block: 	        5790 / 256
+    Finde pos im Block:	    (5790 % 256) * 2
+
+Rootverzeichnis:
+    Pro Datei:
+        Name: 255 byte
+        Größe: 8 byte
+        Benutzer- und Gruppenid: jeweils 4 byte -> 8 byte
+        Berechtigung: 4 byte (Annahme)
+        Zeitpunkte: 24 byte
+            a_time: 8 byte
+            m_time: 8 byte
+            c_time: 8 byte
+        Zeiger auf ersten Datenblock: 5 byte
+
+        Gesamt: 304
+    
+    Es ist wahrscheinlich geschickt, pro Datei einen Block zu verwenden.
