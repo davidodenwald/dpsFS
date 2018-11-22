@@ -4,9 +4,16 @@ dpsFS ist ein FUSE-Dateisystem, für das Betriebssystemlabor der HSKA.
 
 ## Aufbau der ConainerDatei
 
+| Name       | Superblock | DMAP  | FAT     | Rootverzeichnis | Dateien   |
+|------------|------------|-------|---------|-----------------|-----------|
+| Größe      | 1          | 128   | 256     | 64              | 65087     |
+| Blockindex | 0          | 1-128 | 129-384 | 385-448         | 449-65535 |
+
 ### Superblock:
 
-    --
+ToDo:
+
+Definieren was hier reigeschreiben wird.
 
 ### DMAP:
 
@@ -55,3 +62,5 @@ Es ist wahrscheinlich geschickt, pro Datei einen Block zu verwenden.
 Es soll Platz für mindestens 30 MB sein:
 
     33.554.432 byte / 512 byte = 65536 Blöcke
+    65536 Blöcke - 1 Block - 128 Blöcke - 256 Blöcke - 64 Blöcke = 65087 Blöcke
+    65087 Blöcke × 512 byte = 33324544 byte / (1024^2) byte =~ 31,78 MB
