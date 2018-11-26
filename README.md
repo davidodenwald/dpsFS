@@ -20,7 +20,7 @@ Definieren was hier reigeschreiben wird.
 In der DMAP steht für jeden Block ein Character.
 Dabei steht F (Free) für einen freien Block und A (Allocated) für einen belegten Block.
 
-    65536 chars / 512 byte = 128 Blöcke
+    65087 chars / 512 byte = 128 Blöcke
 
 ### FAT:
 
@@ -40,18 +40,11 @@ ToDO: Was steht an der Stelle wenn es keinen Nachfolger gibt?
 
 Pro Datei:
 
-    Name: 255 byte
-    Größe: 8 byte
-    BenutzerID: 4 byte (st_uid)
-    GruppenID: 4 byte (st_gid)
-    Berechtigung: 5 byte (st_mode)
-    Zeitpunkte:
-        letzter Zugriff: 10 byte (st_atime)
-        letzte Änderung: 10 byte (st_mtime)
-        Inode Änderung: 10 byte (st_ctime)
-    Zeiger auf ersten Datenblock: 5 byte
+    Name: 256 byte
+    Stats: 144 byte
+    Zeiger auf ersten Datenblock: 2 byte
 
-    Gesamt: 311
+    Gesamt: 402 (im Test 408)
     
 Es ist wahrscheinlich geschickt, pro Datei einen Block zu verwenden.
 
