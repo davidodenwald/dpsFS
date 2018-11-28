@@ -11,9 +11,7 @@ dpsFS ist ein FUSE-Dateisystem, für das Betriebssystemlabor der HSKA.
 
 ### Superblock:
 
-ToDo:
-
-Definieren was hier reigeschreiben wird.
+Derzeit nichts.
 
 ### DMAP:
 
@@ -28,8 +26,8 @@ Es wird an die Stelle der Blocknr die nächste Blocknummer geschrieben.
 Wenn der letzte Block erreicht ist, wird eine 0 geschrieben.
 
     (unsigned short = 2 byte)
-    65536 Blöcke * 2 byte = 131072 byte
-    122880 byte / 512 byte = 256 Blöcke
+    65087 Blöcke * 2 byte = 130174 byte
+    130174 byte / 512 byte = 256 Blöcke
     256 Addressen pro Block.
 
     Finde Block: 	        BlockNR / 256
