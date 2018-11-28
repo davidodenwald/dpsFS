@@ -25,8 +25,7 @@ Dabei steht F (Free) für einen freien Block und A (Allocated) für einen belegt
 ### FAT:
 
 Es wird an die Stelle der Blocknr die nächste Blocknummer geschrieben.
-
-ToDO: Was steht an der Stelle wenn es keinen Nachfolger gibt?
+Wenn der letzte Block erreicht ist, wird eine 0 geschrieben.
 
     (unsigned short = 2 byte)
     65536 Blöcke * 2 byte = 131072 byte
