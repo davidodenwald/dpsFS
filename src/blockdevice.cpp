@@ -53,7 +53,7 @@ int BlockDevice::open(const char *path) {
     contFile = ::open(path, O_EXCL | O_RDWR);
     if (contFile < 0) {
         if (errno == ENOENT)
-            error("container file does not exists");
+            error("container file does not exist");
         else
             error("unknown error");
     }
