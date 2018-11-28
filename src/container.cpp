@@ -35,16 +35,13 @@ void DMAP::allocate(unsigned short num, unsigned short *arr) {
     this->blockDev->read(lastBlock, dmapBlock);
 
     for (unsigned short i = 0; i < num; i++) {
-        currentBlock = arr[i] / BD_BLOCK_SIZE + DMAP_INDEX;
+        currentBlock = (arr[i] - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;
         if (currentBlock != lastBlock) {
-            printf("read and write\n");
             this->blockDev->write(lastBlock, dmapBlock);
             this->blockDev->read(currentBlock, dmapBlock);
             lastBlock = currentBlock;
         }
-        printf("write pos %d in block %d.\n", arr[i] % BD_BLOCK_SIZE,
-               currentBlock);
-        dmapBlock[arr[i] % BD_BLOCK_SIZE] = 'A';
+        dmapBlock[(arr[i] - FILES_INDEX) % BD_BLOCK_SIZE] = 'A';
     }
     this->blockDev->write(lastBlock, dmapBlock);
 }
@@ -57,16 +54,17 @@ void DMAP::allocate(unsigned short num, unsigned short *arr) {
  */
 void DMAP::getFree(unsigned short num, unsigned short *arr) {
     char dmapBlock[BD_BLOCK_SIZE];
+    unsigned short found = 0;
+
     for (unsigned short i = 0; i < DMAP_SIZE; i++) {
         this->blockDev->read(i + DMAP_INDEX, dmapBlock);
 
-        unsigned short found = 0;
         for (unsigned short k = 0; k < BD_BLOCK_SIZE; k++) {
             if (dmapBlock[k] == 'F') {
                 if (found == num) {
                     return;
                 }
-                arr[found] = i * BD_BLOCK_SIZE + k;
+                arr[found] = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
                 found++;
             }
         }
@@ -82,7 +80,7 @@ RootDir::~RootDir() {}
 
 /**
  * Writes file information to the RootDir.
- * 
+ *
  * @param num       The number under which the file is stored.
  * @param *fileData The file information which must be stored.
  */
