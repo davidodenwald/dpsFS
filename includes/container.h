@@ -45,7 +45,7 @@ class FAT {
    public:
     FAT(BlockDevice *blockDev);
     ~FAT();
-    void write(unsigned short content, unsigned short blockPos);
+    void write(unsigned short curAddress, unsigned short nextAddress);
     unsigned short read(unsigned short blockPos);
 };
 
