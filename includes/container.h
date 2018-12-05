@@ -15,6 +15,8 @@
 #define FILES_SIZE 65087
 #define FILES_INDEX 449
 
+bool checkBoundary(int address);
+
 class Superblock {
    private:
     BlockDevice *blockDev;
