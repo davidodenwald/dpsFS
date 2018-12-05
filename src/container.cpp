@@ -2,6 +2,17 @@
 
 #include "container.h"
 
+
+/**
+ * 
+ */
+bool checkBoundary(int address) {
+     if (address < FILES_INDEX || address > FILES_SIZE) {
+        return false;
+    }
+    return true;
+}
+
 /**
  * Object representing the DMAP sector of the container.
  */
@@ -82,7 +93,7 @@ RootDir::~RootDir() {}
 
 /**
  * Writes file information to the RootDir.
- * 
+ *
  * @param num       The number under which the file is stored.
  * @param *fileData The file information which must be stored.
  */
@@ -98,4 +109,41 @@ void RootDir::write(unsigned short num, dpsFile *fileData) {
  */
 void RootDir::read(unsigned short num, dpsFile *fileData) {
     this->blockDev->read(ROOTDIR_INDEX + num, (char *)fileData);
+}
+
+/**
+ * Object representing the FAT sector of the container.
+ */
+FAT::FAT(BlockDevice *blockDev) { this->blockDev = blockDev; }
+
+FAT::~FAT() {}
+
+/**
+ * Writes next address to the given address.
+ *
+ */
+void FAT::write(unsigned short curAddress, unsigned short nextAddress) {
+    if (!checkBoundary(curAddress) || (!checkBoundary(nextAddress) && nextAddress != 0) || curAddress == nextAddress) {
+        return;
+    }
+    char fatBlock[BD_BLOCK_SIZE];
+    this->blockDev->read(FAT_INDEX + curAddress / 256, fatBlock);
+    fatBlock[curAddress % 256] = (nextAddress >> 8);
+    fatBlock[curAddress % 256 + 1] = (nextAddress & 0xff);
+    this->blockDev->write(FAT_INDEX + curAddress / 256, fatBlock);
+}
+
+/**
+ * Reads next address from the given address.
+ *
+ */
+unsigned short FAT::read(unsigned short curAddress) {
+    if (!checkBoundary(curAddress)) {
+        return -1;
+    }
+
+    char fatBlock[BD_BLOCK_SIZE];
+    blockDev->read(FAT_INDEX + curAddress / 256, fatBlock);
+    return ((((unsigned short)fatBlock[curAddress % 256]) << 8) +
+            (unsigned short)fatBlock[curAddress % 256 + 1]);
 }
