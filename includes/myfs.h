@@ -14,11 +14,18 @@
 
 #include "blockdevice.h"
 #include "myfs-structs.h"
+#include "container.h"
 
 class MyFS {
 private:
     static MyFS *_instance;
     FILE *logFile;
+    std::map<const char*, unsigned short> fileMap;
+    BlockDevice blockDev;
+    Superblock superB;
+    DMAP dM;
+    FAT fa;
+    RootDir rootD;
     
 public:
     static MyFS *Instance();
