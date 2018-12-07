@@ -14,6 +14,15 @@ bool checkBoundary(int address) {
 }
 
 /**
+ * Object representing the Superblock sector of the container.
+ */
+Superblock::Superblock(BlockDevice *blockDev) { this->blockDev = blockDev; }
+
+Superblock::~Superblock() {}
+
+
+
+/**
  * Object representing the DMAP sector of the container.
  */
 DMAP::DMAP(BlockDevice *blockDev) { this->blockDev = blockDev; }
