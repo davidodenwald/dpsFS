@@ -2,12 +2,11 @@
 
 #include "container.h"
 
-
 /**
- * 
+ * Checks if the address is a valid file-block address.
  */
 bool checkBoundary(int address) {
-     if (address < FILES_INDEX || address > FILES_SIZE) {
+    if (address < FILES_INDEX || address > FILES_SIZE) {
         return false;
     }
     return true;
@@ -19,8 +18,6 @@ bool checkBoundary(int address) {
 Superblock::Superblock(BlockDevice *blockDev) { this->blockDev = blockDev; }
 
 Superblock::~Superblock() {}
-
-
 
 /**
  * Object representing the DMAP sector of the container.
@@ -36,7 +33,7 @@ void DMAP::create() {
     char dmapBlock[BD_BLOCK_SIZE];
     memset(dmapBlock, 'F', BD_BLOCK_SIZE);
 
-    for (unsigned short i = 0; i < DMAP_SIZE; i++) {
+    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
         this->blockDev->write(i + DMAP_INDEX, dmapBlock);
     }
 }
@@ -47,14 +44,14 @@ void DMAP::create() {
  * @param num   The number of blocks that must be written.
  * @param *arr  The array of block which must be written.
  */
-void DMAP::allocate(unsigned short num, unsigned short *arr) {
-    unsigned short currentBlock;
+void DMAP::allocate(uint16_t num, uint16_t *arr) {
+    uint16_t currentBlock;
     int lastBlock = 0 + DMAP_INDEX;
 
     char dmapBlock[BD_BLOCK_SIZE];
     this->blockDev->read(lastBlock, dmapBlock);
 
-    for (unsigned short i = 0; i < num; i++) {
+    for (uint16_t i = 0; i < num; i++) {
         currentBlock = (arr[i] - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;
         if (currentBlock != lastBlock) {
             this->blockDev->write(lastBlock, dmapBlock);
@@ -72,14 +69,14 @@ void DMAP::allocate(unsigned short num, unsigned short *arr) {
  * @param num   The number of blocks requested.
  * @param *arr  The array in which the blocks are stored.
  */
-void DMAP::getFree(unsigned short num, unsigned short *arr) {
+void DMAP::getFree(uint16_t num, uint16_t *arr) {
     char dmapBlock[BD_BLOCK_SIZE];
-    unsigned short found = 0;
+    uint16_t found = 0;
 
-    for (unsigned short i = 0; i < DMAP_SIZE; i++) {
+    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
         this->blockDev->read(i + DMAP_INDEX, dmapBlock);
 
-        for (unsigned short k = 0; k < BD_BLOCK_SIZE; k++) {
+        for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
             if (dmapBlock[k] == 'F') {
                 if (found == num) {
                     return;
@@ -104,7 +101,7 @@ RootDir::~RootDir() {}
  * @param num       The number under which the file is stored.
  * @param *fileData The file information which must be stored.
  */
-void RootDir::write(unsigned short num, dpsFile *fileData) {
+void RootDir::write(uint16_t num, dpsFile *fileData) {
     this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData);
 }
 
@@ -114,7 +111,7 @@ void RootDir::write(unsigned short num, dpsFile *fileData) {
  * @param num       The number under which the file was stored.
  * @param *fileData The file information will be stored in here.
  */
-void RootDir::read(unsigned short num, dpsFile *fileData) {
+void RootDir::read(uint16_t num, dpsFile *fileData) {
     this->blockDev->read(ROOTDIR_INDEX + num, (char *)fileData);
 }
 
@@ -129,28 +126,38 @@ FAT::~FAT() {}
  * Writes next address to the given address.
  *
  */
-void FAT::write(unsigned short curAddress, unsigned short nextAddress) {
-    if (!checkBoundary(curAddress) || (!checkBoundary(nextAddress) && nextAddress != 0) || curAddress == nextAddress) {
+void FAT::write(uint16_t curAddress, uint16_t nextAddress) {
+    if (!checkBoundary(curAddress) ||
+        (!checkBoundary(nextAddress) && nextAddress != 0) ||
+        curAddress == nextAddress) {
         return;
     }
+
+    uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
+    uint16_t charAddr = ((curAddress - FILES_INDEX) * 2) % 256;
     char fatBlock[BD_BLOCK_SIZE];
-    this->blockDev->read(FAT_INDEX + curAddress / 256, fatBlock);
-    fatBlock[curAddress % 256] = (nextAddress >> 8);
-    fatBlock[curAddress % 256 + 1] = (nextAddress & 0xff);
-    this->blockDev->write(FAT_INDEX + curAddress / 256, fatBlock);
+
+    this->blockDev->read(blockAddr, fatBlock);
+    fatBlock[charAddr] = (nextAddress >> 8);
+    fatBlock[charAddr + 1] = (nextAddress & 0xff);
+    this->blockDev->write(blockAddr, fatBlock);
 }
 
 /**
  * Reads next address from the given address.
  *
  */
-unsigned short FAT::read(unsigned short curAddress) {
+uint16_t FAT::read(uint16_t curAddress) {
     if (!checkBoundary(curAddress)) {
-        return -1;
+        return 0;
     }
-
+    uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
+    uint16_t charAddr = ((curAddress - FILES_INDEX) * 2) % 256;
     char fatBlock[BD_BLOCK_SIZE];
-    blockDev->read(FAT_INDEX + curAddress / 256, fatBlock);
-    return ((((unsigned short)fatBlock[curAddress % 256]) << 8) +
-            (unsigned short)fatBlock[curAddress % 256 + 1]);
+
+    blockDev->read(blockAddr, fatBlock);
+    uint8_t first = (uint16_t)fatBlock[charAddr];
+    uint8_t second = (uint16_t)fatBlock[charAddr + 1];
+    uint16_t combined = (first << 8) | second;
+    return combined;
 }

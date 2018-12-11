@@ -36,8 +36,8 @@ class DMAP {
     DMAP(BlockDevice *blockDev);
     ~DMAP();
     void create();
-    void allocate(unsigned short num, unsigned short *arr);
-    void getFree(unsigned short num, unsigned short *arr);
+    void allocate(uint16_t num, uint16_t *arr);
+    void getFree(uint16_t num, uint16_t *arr);
 };
 
 class FAT {
@@ -47,14 +47,14 @@ class FAT {
    public:
     FAT(BlockDevice *blockDev);
     ~FAT();
-    void write(unsigned short curAddress, unsigned short nextAddress);
-    unsigned short read(unsigned short blockPos);
+    void write(uint16_t curAddress, uint16_t nextAddress);
+    uint16_t read(uint16_t blockPos);
 };
 
 struct dpsFile {
     char name[256];
     struct stat stat;
-    unsigned short firstBlock;
+    uint16_t firstBlock;
 };
 
 class RootDir {
@@ -64,8 +64,8 @@ class RootDir {
    public:
     RootDir(BlockDevice *blockDev);
     ~RootDir();
-    void write(unsigned short num, dpsFile *fileData);
-    void read(unsigned short num, dpsFile *fileData);
+    void write(uint16_t num, dpsFile *fileData);
+    void read(uint16_t num, dpsFile *fileData);
 };
 
 #endif

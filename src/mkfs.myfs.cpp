@@ -7,8 +7,8 @@
 //
 
 #include <errno.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "blockdevice.h"
@@ -30,20 +30,11 @@ int main(int argc, char *argv[]) {
     DMAP dmap = DMAP(&blockDev);
     dmap.create();
 
-    unsigned short arr[6];
-    dmap.getFree(5, arr);
+    FAT fat = FAT(&blockDev);
 
-    
-    for(int i = 0; i < 5; i++) {
-        printf("%d\n", arr[i]);
-    }
-    arr[5] = 514;
+    RootDir rd = RootDir(&blockDev);
 
-    dmap.allocate(6, arr);
-    
-
-    /*
-    for (int i = 2; i < argc; i++) {
+    for (uint16_t i = 2; i < argc; i++) {
         dpsFile file;
         char *filePath = argv[i];
         strcpy(file.name, basename(filePath));
@@ -52,10 +43,38 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "error: file %s doesn't exist\n", filePath);
             continue;
         }
-        file.firstBlock = 1;
-        RootDir rd = RootDir(&blockDev);
-        rd.write(&file, 0);
+
+        // DMAP
+        unsigned long blockCount = 0;
+        if (file.stat.st_size % 512 == 0) {
+            blockCount = file.stat.st_size / 512;
+        } else {
+            blockCount = file.stat.st_size / 512 + 1;
+        }
+        if (blockCount > FILES_SIZE) {
+            fprintf(stderr, "error: file %s is to big for filesystem\n",
+                    filePath);
+            continue;
+        }
+
+        uint16_t *blocks = (uint16_t *)malloc(sizeof(uint16_t) * blockCount);
+        dmap.getFree(blockCount, blocks);
+        dmap.allocate(blockCount, blocks);
+        file.firstBlock = blocks[0];
+
+        // FAT
+        uint16_t k;
+        for (k = 1; k < blockCount; k++) {
+            printf("Write: %d -> %d\n", blocks[k - 1], blocks[k]);
+            fat.write(blocks[k - 1], blocks[k]);
+        }
+        printf("Write: %d -> %d\n", blocks[k - 1], 0);
+        fat.write(blocks[k - 1], 0);
+
+        // RootDir
+        rd.write(i - 2, &file);
     }
-    */
+
+    blockDev.close();
     return 0;
 }
