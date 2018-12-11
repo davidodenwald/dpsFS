@@ -66,7 +66,7 @@ class RootDir {
     ~RootDir();
     int write(uint16_t num, dpsFile *fileData);
     int read(uint16_t num, dpsFile *fileData);
-    int get(char *name, dpsFile *fileData);
+    int get(const char *name, dpsFile *fileData);
 };
 
 #endif

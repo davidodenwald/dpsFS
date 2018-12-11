@@ -139,7 +139,7 @@ int RootDir::read(uint16_t num, dpsFile *fileData) {
  *
  * @return          ENOENT when no file with name was found; 0 otherwise.
  */
-int RootDir::get(char *name, dpsFile *fileData) {
+int RootDir::get(const char *name, dpsFile *fileData) {
     for (uint16_t i = ROOTDIR_INDEX; i < (ROOTDIR_INDEX + ROOTDIR_SIZE); i++) {
         this->blockDev->read(i, (char *)fileData);
         if (strcmp(fileData->name, name) == 0) {

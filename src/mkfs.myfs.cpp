@@ -55,17 +55,18 @@ int main(int argc, char *argv[]) {
         }
 
         // DMAP
-        unsigned long blockCount = 0;
+        if (file.stat.st_size / 512 > FILES_SIZE) {
+            fprintf(stderr, "error: file %s is to big for filesystem\n",
+                    filePath);
+            exit(EFBIG);
+        }
+        int blockCount = 0;
         if (file.stat.st_size % 512 == 0) {
             blockCount = file.stat.st_size / 512;
         } else {
             blockCount = file.stat.st_size / 512 + 1;
         }
-        if (blockCount > FILES_SIZE) {
-            fprintf(stderr, "error: file %s is to big for filesystem\n",
-                    filePath);
-            exit(EFBIG);
-        }
+        
         uint16_t *blocks = (uint16_t *)malloc(sizeof(uint16_t) * blockCount);
         dmap.getFree(blockCount, blocks);
         if (blocks[blockCount - 1] > FILES_INDEX + FILES_SIZE) {

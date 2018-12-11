@@ -6,7 +6,8 @@
 //  Copyright © 2017 Oliver Waldhorst. All rights reserved.
 //
 
-// For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
+// For documentation of FUSE methods see
+// https://libfuse.github.io/doxygen/structfuse__operations.html
 
 #undef DEBUG
 
@@ -15,56 +16,61 @@
 #define DEBUG_METHODS
 #define DEBUG_RETURN_VALUES
 
-#include "macros.h"
-
-#include "myfs.h"
-#include "myfs-info.h"
-#include <unistd.h>
-#include <time.h>
 #include <string.h>
-#include <map>
+#include <unistd.h>
+
 #include "blockdevice.h"
 #include "container.h"
+#include "macros.h"
+#include "myfs-info.h"
+#include "myfs.h"
 
-MyFS* MyFS::_instance = NULL;
+MyFS *MyFS::_instance = NULL;
 
-MyFS* MyFS::Instance() {
-    if(_instance == NULL) {
+MyFS *MyFS::Instance() {
+    if (_instance == NULL) {
         _instance = new MyFS();
     }
     return _instance;
 }
 
 MyFS::MyFS() {
-    this->logFile= stderr;
-    this->fileMap = std::map<const char*, unsigned short>();
     this->blockDev = BlockDevice();
+    /*
+    this->logFile = stderr;
+    this->fileMap = std::map<const char *, unsigned short>();
     this->superB = Superblock(&blockDev);
     this->dM = DMAP(&blockDev);
     this->fa = FAT(&blockDev);
-    this->rootD = RootDir(&blockDev);   
+    this->rootD = RootDir(&blockDev);
+    */
 }
 
 MyFS::~MyFS() {}
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     LOGM();
-    statbuf->st_uid = getuid();
-    statbuf->st_gid = getgid();
-    statbuf->st_atim.tv_sec = time(NULL);
-    statbuf->st_mtim.tv_sec = time(NULL);
-    if (strcmp(path, "/" ) == 0) {
-		statbuf->st_mode = S_IFDIR | 0555;
-		statbuf->st_nlink = 2;
-	} else {
-		statbuf->st_mode = S_IFREG | 0644;
-		statbuf->st_nlink = 1;
-		
-	}
-    
+    LOGF("path: %s\n", path);
 
-    
+    if (strcmp(path, "/") == 0) {
+        statbuf->st_uid = getuid();
+        statbuf->st_gid = getgid();
+        statbuf->st_atime = time(NULL);
+        statbuf->st_mtime = time(NULL);
+        statbuf->st_ctime = time(NULL);
+        statbuf->st_mode = S_IFDIR | 0555;
+        statbuf->st_nlink = 2;
+        RETURN(0);
+    }
+    RootDir rd = RootDir(&this->blockDev);
+    const char *name = basename(path);
+    dpsFile tmpFile;
 
+    int err = rd.get(name, &tmpFile);
+    if (err != 0) {
+        RETURN(-err);
+    }
+    memcpy(&statbuf, &tmpFile.stat, sizeof(dpsFile));
     RETURN(0);
 }
 
@@ -75,9 +81,9 @@ int MyFS::fuseReadlink(const char *path, char *link, size_t size) {
 
 int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
@@ -88,9 +94,9 @@ int MyFS::fuseMkdir(const char *path, mode_t mode) {
 
 int MyFS::fuseUnlink(const char *path) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
@@ -136,24 +142,26 @@ int MyFS::fuseUtime(const char *path, struct utimbuf *ubuf) {
 
 int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
-int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
+int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
+                   struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     return 0;
     // TODO: Implement this!
 }
 
-int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
+int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
+                    off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
@@ -169,9 +177,9 @@ int MyFS::fuseFlush(const char *path, struct fuse_file_info *fileInfo) {
 
 int MyFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
@@ -192,106 +200,102 @@ int MyFS::fuseRemovexattr(const char *path, const char *name) {
 
 int MyFS::fuseOpendir(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
-int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
+int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
+                      off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
-    filler (buf, ".", NULL, 0);
-    filler (buf, "..", NULL, 0);
+    filler(buf, ".", NULL, 0);
+    filler(buf, "..", NULL, 0);
 
     if (strcmp(path, "/") == 0) {
-        //show file names
-        //filler( buffer, "file54", NULL, 0 );
+        // show file names
+        // filler( buffer, "file54", NULL, 0 );
     }
     // TODO: Implement this!
-    
+
     RETURN(0);
-    
+
     // <<< My new code
 }
 
 int MyFS::fuseReleasedir(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
-int MyFS::fuseFsyncdir(const char *path, int datasync, struct fuse_file_info *fileInfo) {
+int MyFS::fuseFsyncdir(const char *path, int datasync,
+                       struct fuse_file_info *fileInfo) {
     LOGM();
     RETURN(0);
 }
 
-int MyFS::fuseTruncate(const char *path, off_t offset, struct fuse_file_info *fileInfo) {
+int MyFS::fuseTruncate(const char *path, off_t offset,
+                       struct fuse_file_info *fileInfo) {
     LOGM();
     RETURN(0);
 }
 
-int MyFS::fuseCreate(const char *path, mode_t mode, struct fuse_file_info *fileInfo) {
+int MyFS::fuseCreate(const char *path, mode_t mode,
+                     struct fuse_file_info *fileInfo) {
     LOGM();
-    
+
     // TODO: Implement this!
-    
+
     RETURN(0);
 }
 
-void MyFS::fuseDestroy() {
-    LOGM();
-}
+void MyFS::fuseDestroy() { LOGM(); }
 
-void* MyFS::fuseInit(struct fuse_conn_info *conn) {
+void *MyFS::fuseInit(struct fuse_conn_info *conn) {
     // Open logfile
-    this->logFile= fopen(((MyFsInfo *) fuse_get_context()->private_data)->logFile, "w+");
-    if(this->logFile == NULL) {
-        fprintf(stderr, "ERROR: Cannot open logfile %s\n", ((MyFsInfo *) fuse_get_context()->private_data)->logFile);
+    this->logFile =
+        fopen(((MyFsInfo *)fuse_get_context()->private_data)->logFile, "w+");
+    if (this->logFile == NULL) {
+        fprintf(stderr, "ERROR: Cannot open logfile %s\n",
+                ((MyFsInfo *)fuse_get_context()->private_data)->logFile);
     } else {
-        //    this->logFile= ((MyFsInfo *) fuse_get_context()->private_data)->logFile;
-        
         // turn of logfile buffering
         setvbuf(this->logFile, NULL, _IOLBF, 0);
-        
+
         LOG("Starting logging...\n");
         LOGM();
-        
-        // you can get the containfer file name here:
-        LOGF("Container file name: %s", ((MyFsInfo *) fuse_get_context()->private_data)->contFile);
-        
-        // TODO: Implement your initialization methods here!
-        struct dpsFile fileInfo;
-        for (int i = 0; i < 64; i++) {
-            this->rootD.read(i + ROOTDIR_INDEX, &fileInfo);
-            char name[256]= fileInfo.name;
-            fileMap.insert((name, ((unsigned short) (i + ROOTDIR_INDEX)));
-        }
-        
+
+        LOGF("Container file name: %s",
+             ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
+
+        blockDev.open(((MyFsInfo *)fuse_get_context()->private_data)->contFile);
     }
-    
     RETURN(0);
 }
 
 #ifdef __APPLE__
-int MyFS::fuseSetxattr(const char *path, const char *name, const char *value, size_t size, int flags, uint32_t x) {
+int MyFS::fuseSetxattr(const char *path, const char *name, const char *value,
+                       size_t size, int flags, uint32_t x) {
 #else
-int MyFS::fuseSetxattr(const char *path, const char *name, const char *value, size_t size, int flags) {
+int MyFS::fuseSetxattr(const char *path, const char *name, const char *value,
+                       size_t size, int flags) {
 #endif
     LOGM();
     RETURN(0);
 }
-    
+
 #ifdef __APPLE__
-int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t size, uint x) {
+int MyFS::fuseGetxattr(const char *path, const char *name, char *value,
+                       size_t size, uint x) {
 #else
-int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t size) {
+int MyFS::fuseGetxattr(const char *path, const char *name, char *value,
+                       size_t size) {
 #endif
     LOGM();
     RETURN(0);
 }
-        
+
 // TODO: Add your own additional methods here!
-            
-

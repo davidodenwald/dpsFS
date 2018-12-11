@@ -20,12 +20,16 @@ class MyFS {
 private:
     static MyFS *_instance;
     FILE *logFile;
-    std::map<const char*, unsigned short> fileMap;
+    FILE *mountDir;
+
     BlockDevice blockDev;
+    /*
+    std::map<const char*, unsigned short> fileMap;
     Superblock superB;
     DMAP dM;
     FAT fa;
     RootDir rootD;
+    */
     
 public:
     static MyFS *Instance();
