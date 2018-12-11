@@ -1,6 +1,8 @@
+#include <errno.h>
 #include <string.h>
 
 #include "container.h"
+#include "myfs-structs.h"
 
 /**
  * Checks if the address is a valid file-block address.
@@ -100,9 +102,16 @@ RootDir::~RootDir() {}
  *
  * @param num       The number under which the file is stored.
  * @param *fileData The file information which must be stored.
+ *
+ * @return          EMFILE when num was bigger than NUM_DIR_ENTRIES or negativ;
+ *                  0 otherwise.
  */
-void RootDir::write(uint16_t num, dpsFile *fileData) {
+int RootDir::write(uint16_t num, dpsFile *fileData) {
+    if (num > NUM_DIR_ENTRIES) {
+        return EMFILE;
+    }
     this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData);
+    return 0;
 }
 
 /**
@@ -110,9 +119,34 @@ void RootDir::write(uint16_t num, dpsFile *fileData) {
  *
  * @param num       The number under which the file was stored.
  * @param *fileData The file information will be stored in here.
+ *
+ * @return          EMFILE when num was bigger than NUM_DIR_ENTRIES or negativ;
+ *                  0 otherwise.
  */
-void RootDir::read(uint16_t num, dpsFile *fileData) {
+int RootDir::read(uint16_t num, dpsFile *fileData) {
+    if (num > NUM_DIR_ENTRIES || num < 1) {
+        return EMFILE;
+    }
     this->blockDev->read(ROOTDIR_INDEX + num, (char *)fileData);
+    return 0;
+}
+
+/**
+ * Gets the fileinformation by filename.
+ *
+ * @param *name     The name of the file.
+ * @param *fileData The file information will be stored in here.
+ *
+ * @return          ENOENT when no file with name was found; 0 otherwise.
+ */
+int RootDir::get(char *name, dpsFile *fileData) {
+    for (uint16_t i = ROOTDIR_INDEX; i < (ROOTDIR_INDEX + ROOTDIR_SIZE); i++) {
+        this->blockDev->read(i, (char *)fileData);
+        if (strcmp(fileData->name, name) == 0) {
+            return 0;
+        }
+    }
+    return ENOENT;
 }
 
 /**

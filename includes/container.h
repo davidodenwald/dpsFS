@@ -64,8 +64,9 @@ class RootDir {
    public:
     RootDir(BlockDevice *blockDev);
     ~RootDir();
-    void write(uint16_t num, dpsFile *fileData);
-    void read(uint16_t num, dpsFile *fileData);
+    int write(uint16_t num, dpsFile *fileData);
+    int read(uint16_t num, dpsFile *fileData);
+    int get(char *name, dpsFile *fileData);
 };
 
 #endif
