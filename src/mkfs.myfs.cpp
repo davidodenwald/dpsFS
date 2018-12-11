@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <fstream>
 
 #include "blockdevice.h"
 #include "container.h"
@@ -65,14 +66,23 @@ int main(int argc, char *argv[]) {
         // FAT
         uint16_t k;
         for (k = 1; k < blockCount; k++) {
-            printf("Write: %d -> %d\n", blocks[k - 1], blocks[k]);
             fat.write(blocks[k - 1], blocks[k]);
         }
-        printf("Write: %d -> %d\n", blocks[k - 1], 0);
         fat.write(blocks[k - 1], 0);
 
         // RootDir
         rd.write(i - 2, &file);
+
+        // write Bytes
+
+        std::ifstream fileStream (filePath);
+        char buffer[BD_BLOCK_SIZE];
+
+        for(uint16_t i = 0; i < blockCount; i++) {
+            fileStream.read(buffer, BD_BLOCK_SIZE);
+            blockDev.write(blocks[i], buffer);
+        }
+        fileStream.close();
     }
 
     blockDev.close();
