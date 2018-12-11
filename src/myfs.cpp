@@ -19,6 +19,12 @@
 
 #include "myfs.h"
 #include "myfs-info.h"
+#include <unistd.h>
+#include <time.h>
+#include <string.h>
+#include <map>
+#include "blockdevice.h"
+#include "container.h"
 
 MyFS* MyFS::_instance = NULL;
 
@@ -31,17 +37,34 @@ MyFS* MyFS::Instance() {
 
 MyFS::MyFS() {
     this->logFile= stderr;
+    this->fileMap = std::map<const char*, unsigned short>();
+    this->blockDev = BlockDevice();
+    this->superB = Superblock(&blockDev);
+    this->dM = DMAP(&blockDev);
+    this->fa = FAT(&blockDev);
+    this->rootD = RootDir(&blockDev);   
 }
 
-MyFS::~MyFS() {
-    
-}
+MyFS::~MyFS() {}
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     LOGM();
+    statbuf->st_uid = getuid();
+    statbuf->st_gid = getgid();
+    statbuf->st_atim.tv_sec = time(NULL);
+    statbuf->st_mtim.tv_sec = time(NULL);
+    if (strcmp(path, "/" ) == 0) {
+		statbuf->st_mode = S_IFDIR | 0555;
+		statbuf->st_nlink = 2;
+	} else {
+		statbuf->st_mode = S_IFREG | 0644;
+		statbuf->st_nlink = 1;
+		
+	}
     
-    // TODO: Implement this!
+
     
+
     RETURN(0);
 }
 
@@ -122,9 +145,8 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
     
+    return 0;
     // TODO: Implement this!
-
-    RETURN(0);
 }
 
 int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
@@ -178,7 +200,13 @@ int MyFS::fuseOpendir(const char *path, struct fuse_file_info *fileInfo) {
 
 int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
-    
+    filler (buf, ".", NULL, 0);
+    filler (buf, "..", NULL, 0);
+
+    if (strcmp(path, "/") == 0) {
+        //show file names
+        //filler( buffer, "file54", NULL, 0 );
+    }
     // TODO: Implement this!
     
     RETURN(0);
@@ -234,6 +262,13 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOGF("Container file name: %s", ((MyFsInfo *) fuse_get_context()->private_data)->contFile);
         
         // TODO: Implement your initialization methods here!
+        struct dpsFile fileInfo;
+        for (int i = 0; i < 64; i++) {
+            this->rootD.read(i + ROOTDIR_INDEX, &fileInfo);
+            char name[256]= fileInfo.name;
+            fileMap.insert((name, ((unsigned short) (i + ROOTDIR_INDEX)));
+        }
+        
     }
     
     RETURN(0);
