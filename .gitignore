@@ -31,3 +31,8 @@
 *.out
 *.app
 *.myfs
+
+# test files
+container
+logfile
+mountdir
