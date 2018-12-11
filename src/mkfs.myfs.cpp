@@ -25,24 +25,33 @@ int main(int argc, char *argv[]) {
         exit(ENOENT);
     }
 
+    if (sizeof(basename(argv[1])) > NAME_LENGTH) {
+        fprintf(stderr, "error: filename %s is too long\n", argv[1]);
+        exit(ENAMETOOLONG);
+    }
+
     BlockDevice blockDev = BlockDevice();
     blockDev.open(argv[1]);
-
     DMAP dmap = DMAP(&blockDev);
     dmap.create();
-
     FAT fat = FAT(&blockDev);
-
     RootDir rd = RootDir(&blockDev);
 
-    for (uint16_t i = 2; i < argc; i++) {
+    for (int i = 2; i < argc; i++) {
         dpsFile file;
         char *filePath = argv[i];
+
+        // save name of file
+        if (sizeof(basename(filePath)) > NAME_LENGTH) {
+            fprintf(stderr, "error: filename %s is too long\n", filePath);
+            exit(ENAMETOOLONG);
+        }
         strcpy(file.name, basename(filePath));
 
+        // save stats of file
         if (stat(filePath, &file.stat) == -1) {
             fprintf(stderr, "error: file %s doesn't exist\n", filePath);
-            continue;
+            exit(ENOENT);
         }
 
         // DMAP
@@ -55,16 +64,21 @@ int main(int argc, char *argv[]) {
         if (blockCount > FILES_SIZE) {
             fprintf(stderr, "error: file %s is to big for filesystem\n",
                     filePath);
-            continue;
+            exit(EFBIG);
         }
-
         uint16_t *blocks = (uint16_t *)malloc(sizeof(uint16_t) * blockCount);
         dmap.getFree(blockCount, blocks);
+        if (blocks[blockCount - 1] > FILES_INDEX + FILES_SIZE) {
+            fprintf(stderr,
+                    "error: not enough space for file %s in filesystem\n",
+                    filePath);
+            exit(EFBIG);
+        }
         dmap.allocate(blockCount, blocks);
         file.firstBlock = blocks[0];
 
         // FAT
-        uint16_t k;
+        int k;
         for (k = 1; k < blockCount; k++) {
             fat.write(blocks[k - 1], blocks[k]);
         }
@@ -74,17 +88,15 @@ int main(int argc, char *argv[]) {
         rd.write(i - 2, &file);
 
         // write Bytes
-
-        std::ifstream fileStream (filePath);
+        std::ifstream fileStream(filePath);
         char buffer[BD_BLOCK_SIZE];
-
-        for(uint16_t i = 0; i < blockCount; i++) {
+        for (int i = 0; i < blockCount; i++) {
             fileStream.read(buffer, BD_BLOCK_SIZE);
             blockDev.write(blocks[i], buffer);
         }
         fileStream.close();
     }
-
+    
     blockDev.close();
     return 0;
 }
