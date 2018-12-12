@@ -34,23 +34,13 @@ MyFS *MyFS::Instance() {
     return _instance;
 }
 
-MyFS::MyFS() {
-    this->blockDev = BlockDevice();
-    /*
-    this->logFile = stderr;
-    this->fileMap = std::map<const char *, unsigned short>();
-    this->superB = Superblock(&blockDev);
-    this->dM = DMAP(&blockDev);
-    this->fa = FAT(&blockDev);
-    this->rootD = RootDir(&blockDev);
-    */
-}
+MyFS::MyFS() {}
 
 MyFS::~MyFS() {}
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     LOGM();
-    LOGF("path: %s\n", path);
+    LOGF("path: %s", path);
 
     if (strcmp(path, "/") == 0) {
         statbuf->st_uid = getuid();
@@ -62,11 +52,11 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_nlink = 2;
         RETURN(0);
     }
-    RootDir rd = RootDir(&this->blockDev);
     const char *name = basename(path);
+    LOGF("Filename: %s", name);
     dpsFile tmpFile;
 
-    int err = rd.get(name, &tmpFile);
+    int err = rootDir->get(name, &tmpFile);
     if (err != 0) {
         RETURN(-err);
     }
@@ -213,14 +203,16 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
     filler(buf, "..", NULL, 0);
 
     if (strcmp(path, "/") == 0) {
-        // show file names
-        // filler( buffer, "file54", NULL, 0 );
+        dpsFile tmpFile;
+        for(int i = 0; i < rootDir->len(); i++) {
+            rootDir->read(i, &tmpFile);
+            if (tmpFile.name != NULL) {
+                // filler(buf, tmpFile.name, &tmpFile.stat, 0);
+                filler(buf, tmpFile.name, NULL, 0);
+            }
+        }
     }
-    // TODO: Implement this!
-
     RETURN(0);
-
-    // <<< My new code
 }
 
 int MyFS::fuseReleasedir(const char *path, struct fuse_file_info *fileInfo) {
@@ -271,7 +263,14 @@ void *MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOGF("Container file name: %s",
              ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
-        blockDev.open(((MyFsInfo *)fuse_get_context()->private_data)->contFile);
+        this->blockDev = new BlockDevice();
+        blockDev->open(((MyFsInfo *)fuse_get_context()->private_data)->contFile);
+
+        this->superBlock = new Superblock(this->blockDev);
+        sbStats s;
+        this->superBlock->read(&s);
+        
+        this->rootDir = new RootDir(this->blockDev, s.fileCount);
     }
     RETURN(0);
 }
