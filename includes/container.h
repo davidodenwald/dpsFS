@@ -2,7 +2,9 @@
 #define container_h
 
 #include <sys/stat.h>
+
 #include "blockdevice.h"
+#include "myfs-structs.h"
 
 #define SUPERBLOCK_SIZE 1
 #define SUPERBLOCK_INDEX 0
@@ -15,7 +17,9 @@
 #define FILES_SIZE 65087
 #define FILES_INDEX 449
 
-bool checkBoundary(int address);
+struct sbStats {
+    int fileCount;
+};
 
 class Superblock {
    private:
@@ -24,8 +28,8 @@ class Superblock {
    public:
     Superblock(BlockDevice *blockDev);
     ~Superblock();
-    void write(char *content);
-    void read(char *content);
+    int read(sbStats *content);
+    int write(sbStats *content);
 };
 
 class DMAP {
@@ -36,9 +40,11 @@ class DMAP {
     DMAP(BlockDevice *blockDev);
     ~DMAP();
     void create();
-    void allocate(uint16_t num, uint16_t *arr);
     void getFree(uint16_t num, uint16_t *arr);
+    void allocate(uint16_t num, uint16_t *arr);
 };
+
+bool checkBoundary(int address);
 
 class FAT {
    private:
@@ -47,12 +53,12 @@ class FAT {
    public:
     FAT(BlockDevice *blockDev);
     ~FAT();
-    void write(uint16_t curAddress, uint16_t nextAddress);
     uint16_t read(uint16_t blockPos);
+    void write(uint16_t curAddress, uint16_t nextAddress);
 };
 
 struct dpsFile {
-    char name[256];
+    char name[NAME_LENGTH];
     struct stat stat;
     uint16_t firstBlock;
 };
@@ -60,13 +66,15 @@ struct dpsFile {
 class RootDir {
    private:
     BlockDevice *blockDev;
+    int fileCount;
 
    public:
-    RootDir(BlockDevice *blockDev);
+    RootDir(BlockDevice *blockDev, int fileCount);
     ~RootDir();
-    int write(uint16_t num, dpsFile *fileData);
-    int read(uint16_t num, dpsFile *fileData);
+    int len();
     int get(const char *name, dpsFile *fileData);
+    int read(uint16_t num, dpsFile *fileData);
+    int write(uint16_t num, dpsFile *fileData);
 };
 
-#endif
+#endif /* container_h */

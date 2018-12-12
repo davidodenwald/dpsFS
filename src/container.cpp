@@ -5,21 +5,25 @@
 #include "myfs-structs.h"
 
 /**
- * Checks if the address is a valid file-block address.
- */
-bool checkBoundary(int address) {
-    if (address < FILES_INDEX || address > FILES_SIZE) {
-        return false;
-    }
-    return true;
-}
-
-/**
  * Object representing the Superblock sector of the container.
  */
 Superblock::Superblock(BlockDevice *blockDev) { this->blockDev = blockDev; }
 
 Superblock::~Superblock() {}
+
+int Superblock::read(sbStats *content) {
+    if (this->blockDev->read(0, (char *)content) != 0) {
+        return EIO;
+    }
+    return 0;
+}
+
+int Superblock::write(sbStats *content) {
+    if (this->blockDev->write(0, (char *)content) != 0) {
+        return EIO;
+    }
+    return 0;
+}
 
 /**
  * Object representing the DMAP sector of the container.
@@ -37,6 +41,31 @@ void DMAP::create() {
 
     for (uint16_t i = 0; i < DMAP_SIZE; i++) {
         this->blockDev->write(i + DMAP_INDEX, dmapBlock);
+    }
+}
+
+/**
+ * Gets free blocks.
+ *
+ * @param num   The number of blocks requested.
+ * @param *arr  The array in which the blocks are stored.
+ */
+void DMAP::getFree(uint16_t num, uint16_t *arr) {
+    char dmapBlock[BD_BLOCK_SIZE];
+    uint16_t found = 0;
+
+    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
+        this->blockDev->read(i + DMAP_INDEX, dmapBlock);
+
+        for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
+            if (dmapBlock[k] == 'F') {
+                if (found == num) {
+                    return;
+                }
+                arr[found] = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
+                found++;
+            }
+        }
     }
 }
 
@@ -66,87 +95,13 @@ void DMAP::allocate(uint16_t num, uint16_t *arr) {
 }
 
 /**
- * Gets free blocks.
- *
- * @param num   The number of blocks requested.
- * @param *arr  The array in which the blocks are stored.
+ * Checks if the address is a valid file-block address.
  */
-void DMAP::getFree(uint16_t num, uint16_t *arr) {
-    char dmapBlock[BD_BLOCK_SIZE];
-    uint16_t found = 0;
-
-    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
-        this->blockDev->read(i + DMAP_INDEX, dmapBlock);
-
-        for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
-            if (dmapBlock[k] == 'F') {
-                if (found == num) {
-                    return;
-                }
-                arr[found] = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
-                found++;
-            }
-        }
+bool checkBoundary(int address) {
+    if (address < FILES_INDEX || address > FILES_SIZE) {
+        return false;
     }
-}
-
-/**
- * Object representing the RootDir sector of the container.
- */
-RootDir::RootDir(BlockDevice *blockDev) { this->blockDev = blockDev; }
-
-RootDir::~RootDir() {}
-
-/**
- * Writes file information to the RootDir.
- *
- * @param num       The number under which the file is stored.
- * @param *fileData The file information which must be stored.
- *
- * @return          EMFILE when num was bigger than NUM_DIR_ENTRIES or negativ;
- *                  0 otherwise.
- */
-int RootDir::write(uint16_t num, dpsFile *fileData) {
-    if (num > NUM_DIR_ENTRIES) {
-        return EMFILE;
-    }
-    this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData);
-    return 0;
-}
-
-/**
- * Reads file information from the RootDir.
- *
- * @param num       The number under which the file was stored.
- * @param *fileData The file information will be stored in here.
- *
- * @return          EMFILE when num was bigger than NUM_DIR_ENTRIES or negativ;
- *                  0 otherwise.
- */
-int RootDir::read(uint16_t num, dpsFile *fileData) {
-    if (num > NUM_DIR_ENTRIES || num < 1) {
-        return EMFILE;
-    }
-    this->blockDev->read(ROOTDIR_INDEX + num, (char *)fileData);
-    return 0;
-}
-
-/**
- * Gets the fileinformation by filename.
- *
- * @param *name     The name of the file.
- * @param *fileData The file information will be stored in here.
- *
- * @return          ENOENT when no file with name was found; 0 otherwise.
- */
-int RootDir::get(const char *name, dpsFile *fileData) {
-    for (uint16_t i = ROOTDIR_INDEX; i < (ROOTDIR_INDEX + ROOTDIR_SIZE); i++) {
-        this->blockDev->read(i, (char *)fileData);
-        if (strcmp(fileData->name, name) == 0) {
-            return 0;
-        }
-    }
-    return ENOENT;
+    return true;
 }
 
 /**
@@ -194,4 +149,82 @@ uint16_t FAT::read(uint16_t curAddress) {
     uint8_t second = (uint16_t)fatBlock[charAddr + 1];
     uint16_t combined = (first << 8) | second;
     return combined;
+}
+
+/**
+ * Object representing the RootDir sector of the container.
+ */
+RootDir::RootDir(BlockDevice *blockDev, int fileCount) {
+    this->blockDev = blockDev;
+    this->fileCount = fileCount;
+}
+
+RootDir::~RootDir() {}
+
+/**
+ * Returns the amount of files currently in the filesystem.
+ */
+int RootDir::len() {
+    return this->fileCount;
+}
+
+/**
+ * Gets the fileinformation by filename.
+ *
+ * @param *name     The name of the file.
+ * @param *fileData The file information will be stored in here.
+ *
+ * @return          ENOENT when no file with name was found; 0 otherwise.
+ */
+int RootDir::get(const char *name, dpsFile *fileData) {
+    for (int i = 0; i < this->fileCount; i++) {
+        if (this->blockDev->read(i + ROOTDIR_INDEX, (char *)fileData) != 0) {
+            return EIO;
+        }
+        if (strcmp(fileData->name, name) == 0) {
+            return 0;
+        }
+    }
+    return ENOENT;
+}
+
+/**
+ * Reads file information from the RootDir.
+ *
+ * @param num       The number under which the file was stored.
+ * @param *fileData The file information will be stored in here.
+ *
+ * @return          EMFILE when num was bigger than NUM_DIR_ENTRIES or negativ.
+ *                  EIO when read failed.
+ *                  0 otherwise.
+ */
+int RootDir::read(uint16_t num, dpsFile *fileData) {
+    if (num > NUM_DIR_ENTRIES || num < 1) {
+        return EMFILE;
+    }
+    if (this->blockDev->read(ROOTDIR_INDEX + num, (char *)fileData) != 0) {
+        return EIO;
+    }
+    return 0;
+}
+
+/**
+ * Writes file information to the RootDir.
+ *
+ * @param num       The number under which the file is stored.
+ * @param *fileData The file information which must be stored.
+ *
+ * @return          EMFILE when num was bigger than NUM_DIR_ENTRIES or negativ.
+ *                  EIO when write failed.
+ *                  0 otherwise.
+ */
+int RootDir::write(uint16_t num, dpsFile *fileData) {
+    if (num > NUM_DIR_ENTRIES) {
+        return EMFILE;
+    }
+    if (this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData) != 0) {
+        return EIO;
+    }
+    this->fileCount++;
+    return 0;
 }

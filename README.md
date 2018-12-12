@@ -11,7 +11,8 @@ dpsFS ist ein FUSE-Dateisystem, für das Betriebssystemlabor der HSKA.
 
 ### Superblock:
 
-Derzeit nichts.
+Struct sbStats:
+- Anzahl der Dateien.
 
 ### DMAP:
 
