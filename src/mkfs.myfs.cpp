@@ -30,12 +30,18 @@ int main(int argc, char *argv[]) {
         exit(ENAMETOOLONG);
     }
 
+    if (argc -2 > NUM_DIR_ENTRIES) {
+        fprintf(stderr, "error: only %d files are allowed\n", NUM_DIR_ENTRIES);
+        exit(1);
+    }
+
     BlockDevice blockDev = BlockDevice();
     blockDev.open(argv[1]);
+    Superblock sb = Superblock(&blockDev);
     DMAP dmap = DMAP(&blockDev);
     dmap.create();
     FAT fat = FAT(&blockDev);
-    RootDir rd = RootDir(&blockDev);
+    RootDir rd = RootDir(&blockDev, 0);
 
     for (int i = 2; i < argc; i++) {
         dpsFile file;
@@ -55,16 +61,16 @@ int main(int argc, char *argv[]) {
         }
 
         // DMAP
-        if (file.stat.st_size / 512 > FILES_SIZE) {
+        if (file.stat.st_size / BD_BLOCK_SIZE > FILES_SIZE) {
             fprintf(stderr, "error: file %s is to big for filesystem\n",
                     filePath);
             exit(EFBIG);
         }
         int blockCount = 0;
-        if (file.stat.st_size % 512 == 0) {
-            blockCount = file.stat.st_size / 512;
+        if (file.stat.st_size % BD_BLOCK_SIZE == 0) {
+            blockCount = file.stat.st_size / BD_BLOCK_SIZE;
         } else {
-            blockCount = file.stat.st_size / 512 + 1;
+            blockCount = file.stat.st_size / BD_BLOCK_SIZE + 1;
         }
         
         uint16_t *blocks = (uint16_t *)malloc(sizeof(uint16_t) * blockCount);
@@ -97,6 +103,11 @@ int main(int argc, char *argv[]) {
         }
         fileStream.close();
     }
+
+    // Superblock
+    sbStats s;
+    s.fileCount = rd.len();
+    sb.write(&s);
     
     blockDev.close();
     return 0;
