@@ -18,7 +18,7 @@
 #define FILES_INDEX 449
 
 struct sbStats {
-    int fileCount;
+    uint16_t fileCount;
 };
 
 class Superblock {
