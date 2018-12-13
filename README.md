@@ -12,7 +12,8 @@ dpsFS ist ein FUSE-Dateisystem, für das Betriebssystemlabor der HSKA.
 ### Superblock:
 
 Struct sbStats:
-- Anzahl der Dateien.
+    
+    Anzahl der Dateien: 2 byte
 
 ### DMAP:
 
@@ -26,7 +27,7 @@ Dabei steht F (Free) für einen freien Block und A (Allocated) für einen belegt
 Es wird an die Stelle der Blocknr die nächste Blocknummer geschrieben.
 Wenn der letzte Block erreicht ist, wird eine 0 geschrieben.
 
-    (unsigned short = 2 byte)
+    (uint16_t = 2 byte)
     65087 Blöcke * 2 byte = 130174 byte
     130174 byte / 512 byte = 256 Blöcke
     256 Addressen pro Block.
