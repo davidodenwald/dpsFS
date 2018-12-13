@@ -54,9 +54,8 @@ int main(int argc, char *argv[]) {
         }
         strcpy(file->name, basename(filePath));
 
-        dpsFile tmp;
         // check if file already exists
-        if (rd.get(file->name, &tmp) == 0) {
+        if (rd.exists(file->name) == 0) {
             fprintf(stderr, "error: filename %s is a duplicate\n", file->name);
             exit(EEXIST);
         }
@@ -100,11 +99,13 @@ int main(int argc, char *argv[]) {
 
         // RootDir
         rd.write(i - 2, file);
+        free(file);
 
         // write Bytes
         std::ifstream fileStream(filePath);
         char buffer[BD_BLOCK_SIZE];
         for (int i = 0; i < blockCount; i++) {
+            // set all array items to 0
             memset(buffer, 0, sizeof(buffer));
             fileStream.read(buffer, BD_BLOCK_SIZE);
             blockDev.write(blocks[i], buffer);
