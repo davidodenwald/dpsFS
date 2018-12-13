@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -206,7 +207,9 @@ int RootDir::len() { return this->fileCount; }
  * @param *name     The name of the file.
  * @param *fileData The file information will be stored in here.
  *
- * @return          ENOENT when no file with name was found; 0 otherwise.
+ * @return          0 when the file was found.
+ *                  ENOENT when the file wasn't found.
+ *                  EIO when read failed.
  */
 int RootDir::get(const char *name, dpsFile *fileData) {
 #ifdef DEBUG
@@ -221,6 +224,26 @@ int RootDir::get(const char *name, dpsFile *fileData) {
         }
     }
     return ENOENT;
+}
+
+/**
+ * Checks if a file exists in the filesystem.
+ *
+ * @param *name     The name of the file.
+ *
+ * @return          0 when the file exists.
+ *                  ENOENT when the file doesn't exist.
+ *                  EIO when read failed.
+ */
+int RootDir::exists(const char *name) {
+#ifdef DEBUG
+    fprintf(stderr, "check if file exists: %s\n", name);
+#endif
+    int res;
+    dpsFile *tmp = (dpsFile *)malloc(BD_BLOCK_SIZE);
+    res = this->get(name, tmp);
+    free(tmp);
+    return res;
 }
 
 /**

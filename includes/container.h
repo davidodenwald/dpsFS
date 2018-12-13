@@ -73,6 +73,7 @@ class RootDir {
     ~RootDir();
     int len();
     int get(const char *name, dpsFile *fileData);
+    int exists(const char *name);
     int read(uint16_t num, dpsFile *fileData);
     int write(uint16_t num, dpsFile *fileData);
 };
