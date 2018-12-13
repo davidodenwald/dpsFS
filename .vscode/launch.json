@@ -28,7 +28,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/mkfs.myfs",
-            "args": ["container", "Makefile", "README.md", "README.md"],
+            "args": ["container", "Makefile", "README.md"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
