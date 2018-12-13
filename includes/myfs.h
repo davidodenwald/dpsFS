@@ -21,6 +21,8 @@ class MyFS {
     static MyFS *_instance;
     FILE *logFile;
 
+    int openFiles;
+
     BlockDevice *blockDev;
     Superblock *superBlock;
     RootDir *rootDir;

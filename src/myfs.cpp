@@ -35,9 +35,24 @@ MyFS *MyFS::Instance() {
     return _instance;
 }
 
-MyFS::MyFS() {}
+MyFS::MyFS() {
+    this->logFile = stderr;
+    this->openFiles = 0;
+    this->blockDev = new BlockDevice();
+    this->superBlock = new Superblock(this->blockDev);
+    this->dmap = new DMAP(this->blockDev);
+    this->fat = new FAT(this->blockDev);
+    // this->rootDir is initialized in MyFS::fuseInit.
+}
 
-MyFS::~MyFS() {}
+MyFS::~MyFS() {
+    this->blockDev->close();
+    delete this->blockDev;
+    delete this->superBlock;
+    delete this->dmap;
+    delete this->fat;
+    delete this->rootDir;
+}
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     LOGM();
@@ -52,19 +67,20 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_mode = S_IFDIR | 0555;
         statbuf->st_nlink = 2;
         statbuf->st_size = 4096;
+        statbuf->st_blocks = 8;
         RETURN(0);
     }
-    const char *name = basename(path);
-    LOGF("Filename: %s", name);
 
+    const char *name = basename(path);
     if (rootDir->exists(name) != 0) {
         RETURN(-ENOENT);
     }
 
-    dpsFile *tmpFile = (dpsFile*) malloc(BD_BLOCK_SIZE);
+    dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
     int err = rootDir->get(name, tmpFile);
     memcpy(statbuf, &tmpFile->stat, sizeof(*statbuf));
     free(tmpFile);
+
     RETURN(-err);
 }
 
@@ -137,17 +153,41 @@ int MyFS::fuseUtime(const char *path, struct utimbuf *ubuf) {
 int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: Implement this!
-
-    RETURN(0);
+    this->openFiles++;
+    if (this->openFiles > NUM_OPEN_FILES) {
+        this->openFiles--;
+        LOGF("error: cannot open file %s. Limit exceeded.\n", path);
+        RETURN(-EMFILE);
+    }
+    dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
+    int err = this->rootDir->get(basename(path), tmpFile);
+    if (err == 0) {
+        fileInfo->fh = tmpFile->firstBlock;
+    }
+    free(tmpFile);
+    RETURN(-err);
 }
 
 int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
                    struct fuse_file_info *fileInfo) {
     LOGM();
-    // TODO: Implement this!
 
-    return 0;
+    uint16_t block;
+    int i = 0;
+    char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
+    for (block = fileInfo->fh; block != 0; block = this->fat->read(block)) {
+        this->blockDev->read(block, tmpBuf);
+        memcpy(buf, tmpBuf, BD_BLOCK_SIZE);
+        buf += BD_BLOCK_SIZE;
+        i++;
+    }
+    free(tmpBuf);
+
+    // rewind buf
+    for(; i > 0; i--) {
+        buf -= BD_BLOCK_SIZE;
+    }
+    RETURN(0);
 }
 
 int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
@@ -171,11 +211,7 @@ int MyFS::fuseFlush(const char *path, struct fuse_file_info *fileInfo) {
 
 int MyFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-    this->blockDev->close();
-    delete this->blockDev;
-    delete this->superBlock;
-    delete this->rootDir;
-
+    this->openFiles--;
     RETURN(0);
 }
 
@@ -196,9 +232,6 @@ int MyFS::fuseRemovexattr(const char *path, const char *name) {
 
 int MyFS::fuseOpendir(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-
-    // TODO: Implement this!
-
     RETURN(0);
 }
 
@@ -209,11 +242,10 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
     filler(buf, "..", NULL, 0);
 
     if (strcmp(path, "/") == 0) {
-        dpsFile *tmpFile = (dpsFile*) malloc(BD_BLOCK_SIZE);
+        dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
         for (int i = 0; i < rootDir->len(); i++) {
             rootDir->read(i, tmpFile);
-            // filler(buf, tmpFile.name, &tmpFile.stat, 0);
-            filler(buf, tmpFile->name, NULL, 0);
+            filler(buf, tmpFile->name, &tmpFile->stat, 0);
         }
         free(tmpFile);
     }
@@ -268,11 +300,9 @@ void *MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOGF("Container file name: %s",
              ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
-        this->blockDev = new BlockDevice();
         blockDev->open(
             ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
-        this->superBlock = new Superblock(this->blockDev);
         sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
         if (this->superBlock->read(s) != 0) {
             LOG("Could not read Superblock");
