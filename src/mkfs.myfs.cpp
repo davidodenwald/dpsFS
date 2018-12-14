@@ -30,6 +30,9 @@ int main(int argc, char *argv[]) {
         exit(ENAMETOOLONG);
     }
 
+    // clear container file
+    fclose(fopen(argv[1], "w"));
+
     if (argc - 2 > NUM_DIR_ENTRIES) {
         fprintf(stderr, "error: only %d files are allowed\n", NUM_DIR_ENTRIES);
         exit(1);
@@ -44,7 +47,7 @@ int main(int argc, char *argv[]) {
     RootDir rd = RootDir(&blockDev, 0);
 
     for (int i = 2; i < argc; i++) {
-        dpsFile *file = (dpsFile*) malloc(BD_BLOCK_SIZE);
+        dpsFile *file = (dpsFile *)malloc(BD_BLOCK_SIZE);
         char *filePath = argv[i];
 
         // save name of file
@@ -73,22 +76,23 @@ int main(int argc, char *argv[]) {
             exit(EFBIG);
         }
 
+        // correct file blocksize and blocks
+        file->stat.st_blksize = 512;
         if (file->stat.st_size % BD_BLOCK_SIZE == 0) {
             file->stat.st_blocks = file->stat.st_size / BD_BLOCK_SIZE;
         } else {
             file->stat.st_blocks = file->stat.st_size / BD_BLOCK_SIZE + 1;
         }
 
-        printf("%ld\n", file->stat.st_blocks);
-
-        uint16_t *blocks = (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
-        dmap.getFree(file->stat.st_blocks, blocks);
-        if (blocks[file->stat.st_blocks - 1] > FILES_INDEX + FILES_SIZE) {
+        if (file->stat.st_blocks > FILES_SIZE) {
             fprintf(stderr,
                     "error: not enough space for file %s in filesystem\n",
                     filePath);
             exit(EFBIG);
         }
+        uint16_t *blocks =
+            (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
+        dmap.getFree(file->stat.st_blocks, blocks);
         dmap.allocate(file->stat.st_blocks, blocks);
         file->firstBlock = blocks[0];
 
@@ -101,7 +105,6 @@ int main(int argc, char *argv[]) {
 
         // RootDir
         rd.write(i - 2, file);
-        free(file);
 
         // write Bytes
         std::ifstream fileStream(filePath);
@@ -114,11 +117,12 @@ int main(int argc, char *argv[]) {
         }
         fileStream.close();
         free(blocks);
+        free(file);
     }
 
     // Superblock
-    sbStats *s = (sbStats*) malloc(BD_BLOCK_SIZE);
-    s->fileCount = 2;
+    sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
+    s->fileCount = rd.len();
     sb.write(s);
     free(s);
 
