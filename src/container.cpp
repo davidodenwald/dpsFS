@@ -60,12 +60,13 @@ void DMAP::create() {
 #ifdef DEBUG
     fprintf(stderr, "Creating DMAP\n");
 #endif
-    char dmapBlock[BD_BLOCK_SIZE];
+    char *dmapBlock = (char*) malloc(BD_BLOCK_SIZE);
     memset(dmapBlock, 'F', BD_BLOCK_SIZE);
 
     for (uint16_t i = 0; i < DMAP_SIZE; i++) {
         this->blockDev->write(i + DMAP_INDEX, dmapBlock);
     }
+    free(dmapBlock);
 }
 
 /**
@@ -149,9 +150,6 @@ uint16_t FAT::read(uint16_t curAddress) {
 #ifdef DEBUG
     fprintf(stderr, "Read address %d from Fat\n", curAddress);
 #endif
-    if (!checkBoundary(curAddress)) {
-        return 0;
-    }
     uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
     uint16_t charAddr = ((curAddress - FILES_INDEX) * 2) % 256;
     char fatBlock[BD_BLOCK_SIZE];
@@ -159,7 +157,8 @@ uint16_t FAT::read(uint16_t curAddress) {
     blockDev->read(blockAddr, fatBlock);
     uint8_t first = (uint16_t)fatBlock[charAddr];
     uint8_t second = (uint16_t)fatBlock[charAddr + 1];
-    return (first << 8) | second;
+    uint16_t res = (first << 8) | second;
+    return res;
 }
 
 /**
@@ -170,12 +169,6 @@ void FAT::write(uint16_t curAddress, uint16_t nextAddress) {
 #ifdef DEBUG
     fprintf(stderr, "Write address %d -> %d to Fat\n", curAddress, nextAddress);
 #endif
-    if (!checkBoundary(curAddress) ||
-        (!checkBoundary(nextAddress) && nextAddress != 0) ||
-        curAddress == nextAddress) {
-        return;
-    }
-
     uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
     uint16_t charAddr = ((curAddress - FILES_INDEX) * 2) % 256;
     char fatBlock[BD_BLOCK_SIZE];
