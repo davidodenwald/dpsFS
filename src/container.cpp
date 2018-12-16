@@ -151,13 +151,12 @@ uint16_t FAT::read(uint16_t curAddress) {
     fprintf(stderr, "Read address %d from Fat\n", curAddress);
 #endif
     uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
-    uint16_t charAddr = ((curAddress - FILES_INDEX) * 2) % 256;
-    char fatBlock[BD_BLOCK_SIZE];
+    uint16_t index = (curAddress - FILES_INDEX) % 256;
+    uint16_t *fatBlock = (uint16_t*) malloc(BD_BLOCK_SIZE);
 
-    blockDev->read(blockAddr, fatBlock);
-    uint8_t first = (uint16_t)fatBlock[charAddr];
-    uint8_t second = (uint16_t)fatBlock[charAddr + 1];
-    uint16_t res = (first << 8) | second;
+    blockDev->read(blockAddr, (char*)fatBlock);
+    uint16_t res = fatBlock[index];
+    free(fatBlock);
     return res;
 }
 
@@ -170,13 +169,13 @@ void FAT::write(uint16_t curAddress, uint16_t nextAddress) {
     fprintf(stderr, "Write address %d -> %d to Fat\n", curAddress, nextAddress);
 #endif
     uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
-    uint16_t charAddr = ((curAddress - FILES_INDEX) * 2) % 256;
-    char fatBlock[BD_BLOCK_SIZE];
+    uint16_t index = (curAddress - FILES_INDEX) % 256;
+    uint16_t *fatBlock = (uint16_t*) malloc(BD_BLOCK_SIZE);
 
-    this->blockDev->read(blockAddr, fatBlock);
-    fatBlock[charAddr] = (nextAddress >> 8);
-    fatBlock[charAddr + 1] = (nextAddress & 0xff);
-    this->blockDev->write(blockAddr, fatBlock);
+    this->blockDev->read(blockAddr, (char*)fatBlock);
+    fatBlock[index] = nextAddress;
+    this->blockDev->write(blockAddr, (char*)fatBlock);
+    free(fatBlock);
 }
 
 /**
