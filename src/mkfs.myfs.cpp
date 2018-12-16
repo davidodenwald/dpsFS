@@ -8,9 +8,14 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fstream>
+
+#ifdef __APPLE__
+#include <libgen.h>
+#endif
 
 #include "blockdevice.h"
 #include "container.h"

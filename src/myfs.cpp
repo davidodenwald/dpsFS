@@ -17,8 +17,13 @@
 #define DEBUG_RETURN_VALUES
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __APPLE__
+#include <libgen.h>
+#endif
 
 #include "blockdevice.h"
 #include "container.h"
@@ -71,7 +76,10 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
         RETURN(0);
     }
 
-    const char *name = basename(path);
+    // needs to be non const for basename
+    char *tmpPath = strdup(path);
+
+    char *name = basename(tmpPath);
     if (rootDir->exists(name) != 0) {
         RETURN(-ENOENT);
     }
@@ -160,7 +168,10 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
         RETURN(-EMFILE);
     }
     dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
-    int err = this->rootDir->get(basename(path), tmpFile);
+
+    // needs to be non const for basename
+    char *tmpPath = strdup(path);
+    int err = this->rootDir->get(basename(tmpPath), tmpFile);
     if (err == 0) {
         fileInfo->fh = tmpFile->firstBlock;
     }
@@ -172,13 +183,13 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
                    struct fuse_file_info *fileInfo) {
     LOGM();
     LOGF("Path: %s | Size: %ld | Offset: %ld\n", path, size, offset);
-    
+
     uint16_t block;
     int read = 0;
     block = fileInfo->fh;
     char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
-    
-    while((size_t) read < (size + offset)) {
+
+    while ((size_t)read < (size + offset)) {
         memset(tmpBuf, 0, BD_BLOCK_SIZE);
         read += BD_BLOCK_SIZE;
         if (read < offset) {
@@ -194,11 +205,11 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
         buf += BD_BLOCK_SIZE;
     }
     free(tmpBuf);
-    
+
     // rewind buf
-    buf -= read - (int) offset;
-    LOGF("read bytes: %d\n",read - (int) offset);
-    RETURN(read - (int) offset);
+    buf -= read - (int)offset;
+    LOGF("read bytes: %d\n", read - (int)offset);
+    RETURN(read - (int)offset);
 }
 
 int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
