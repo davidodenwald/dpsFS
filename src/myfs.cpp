@@ -171,23 +171,34 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
                    struct fuse_file_info *fileInfo) {
     LOGM();
-
+    LOGF("Path: %s | Size: %ld | Offset: %ld\n", path, size, offset);
+    
     uint16_t block;
-    int i = 0;
+    int read = 0;
+    block = fileInfo->fh;
     char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
-    for (block = fileInfo->fh; block != 0; block = this->fat->read(block)) {
+    
+    while((size_t) read < (size + offset)) {
+        memset(tmpBuf, 0, BD_BLOCK_SIZE);
+        read += BD_BLOCK_SIZE;
+        if (read < offset) {
+            block = this->fat->read(block);
+            continue;
+        }
+        if (block == 0) {
+            break;
+        }
         this->blockDev->read(block, tmpBuf);
+        block = this->fat->read(block);
         memcpy(buf, tmpBuf, BD_BLOCK_SIZE);
         buf += BD_BLOCK_SIZE;
-        i++;
     }
     free(tmpBuf);
-
+    
     // rewind buf
-    for(; i > 0; i--) {
-        buf -= BD_BLOCK_SIZE;
-    }
-    RETURN(0);
+    buf -= read - (int) offset;
+    LOGF("read bytes: %d\n",read - (int) offset);
+    RETURN(read - (int) offset);
 }
 
 int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
@@ -254,9 +265,6 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 int MyFS::fuseReleasedir(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-
-    // TODO: Implement this!
-
     RETURN(0);
 }
 
