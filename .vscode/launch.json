@@ -5,6 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "mkfs",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/mkfs.myfs",
+            "args": ["container", "big.txt"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "mount",
             "type": "cppdbg",
             "request": "launch",
@@ -24,11 +43,11 @@
             ]
         },
         {
-            "name": "mkfs",
+            "name": "unittest",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/mkfs.myfs",
-            "args": ["container", "Makefile", "README.md"],
+            "program": "${workspaceFolder}/unittest",
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
