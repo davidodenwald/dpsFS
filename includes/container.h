@@ -54,7 +54,7 @@ class FAT {
     FAT(BlockDevice *blockDev);
     ~FAT();
     uint16_t read(uint16_t blockPos);
-    void write(uint16_t curAddress, uint16_t nextAddress);
+    int write(uint16_t curAddress, uint16_t nextAddress);
 };
 
 struct dpsFile {
