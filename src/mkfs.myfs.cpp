@@ -89,15 +89,15 @@ int main(int argc, char *argv[]) {
             file->stat.st_blocks = file->stat.st_size / BD_BLOCK_SIZE + 1;
         }
 
-        if (file->stat.st_blocks > FILES_SIZE) {
+        // DMAP
+        uint16_t *blocks =
+            (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
+        if (dmap.getFree(file->stat.st_blocks, blocks) !=
+            file->stat.st_blocks) {
             fprintf(stderr,
                     "error: not enough space for file %s in filesystem\n",
                     filePath);
-            exit(EFBIG);
         }
-        uint16_t *blocks =
-            (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
-        dmap.getFree(file->stat.st_blocks, blocks);
         dmap.allocate(file->stat.st_blocks, blocks);
         file->firstBlock = blocks[0];
 
