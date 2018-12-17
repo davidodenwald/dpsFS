@@ -55,18 +55,28 @@ DMAP::~DMAP() {}
 
 /**
  * Initializes the DMAP sector.
+ * @return  0 when successful.
+ *          EIO when write failed.
  */
-void DMAP::create() {
+int DMAP::create() {
 #ifdef DEBUG
     fprintf(stderr, "Creating DMAP\n");
 #endif
-    char *dmapBlock = (char*) malloc(BD_BLOCK_SIZE);
+    char dmapBlock[BD_BLOCK_SIZE];
     memset(dmapBlock, 'F', BD_BLOCK_SIZE);
 
-    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
-        this->blockDev->write(i + DMAP_INDEX, dmapBlock);
+    for (int i = 0; i < DMAP_SIZE - 1; i++) {
+        if (this->blockDev->write(i + DMAP_INDEX, dmapBlock) != 0) {
+            return EIO;
+        }
     }
-    free(dmapBlock);
+    // last block only represents 63 blocks
+    memset(dmapBlock, '0', BD_BLOCK_SIZE);
+    memset(dmapBlock, 'F', FILES_SIZE % BD_BLOCK_SIZE);
+    if (this->blockDev->write(DMAP_INDEX + DMAP_SIZE-1, dmapBlock) != 0) {
+            return EIO;
+    }
+    return 0;
 }
 
 /**
@@ -74,8 +84,11 @@ void DMAP::create() {
  *
  * @param num   The number of blocks requested.
  * @param *arr  The array in which the blocks are stored.
+ *
+ * @return      the number of blocks returned.
+ *              -EIO when read failed.
  */
-void DMAP::getFree(uint16_t num, uint16_t *arr) {
+int DMAP::getFree(uint16_t num, uint16_t *arr) {
 #ifdef DEBUG
     fprintf(stderr, "Get Free %d blocks from DMAP\n", num);
 #endif
@@ -83,18 +96,21 @@ void DMAP::getFree(uint16_t num, uint16_t *arr) {
     uint16_t found = 0;
 
     for (uint16_t i = 0; i < DMAP_SIZE; i++) {
-        this->blockDev->read(i + DMAP_INDEX, dmapBlock);
+        if (this->blockDev->read(i + DMAP_INDEX, dmapBlock) != 0) {
+            return -EIO;
+        }
 
         for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
             if (dmapBlock[k] == 'F') {
                 if (found == num) {
-                    return;
+                    return found;
                 }
                 arr[found] = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
                 found++;
             }
         }
     }
+    return found;
 }
 
 /**
@@ -102,8 +118,11 @@ void DMAP::getFree(uint16_t num, uint16_t *arr) {
  *
  * @param num   The number of blocks that must be written.
  * @param *arr  The array of block which must be written.
+ *
+ *  @return     0 when successful.
+ *              EIO when read failed.
  */
-void DMAP::allocate(uint16_t num, uint16_t *arr) {
+int DMAP::allocate(uint16_t num, uint16_t *arr) {
 #ifdef DEBUG
     fprintf(stderr, "Allocate %d blocks in DMAP\n", num);
 #endif
@@ -111,18 +130,27 @@ void DMAP::allocate(uint16_t num, uint16_t *arr) {
     int lastBlock = 0 + DMAP_INDEX;
 
     char dmapBlock[BD_BLOCK_SIZE];
-    this->blockDev->read(lastBlock, dmapBlock);
+    if (this->blockDev->read(lastBlock, dmapBlock) != 0) {
+        return EIO;
+    }
 
     for (uint16_t i = 0; i < num; i++) {
         currentBlock = (arr[i] - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;
         if (currentBlock != lastBlock) {
-            this->blockDev->write(lastBlock, dmapBlock);
-            this->blockDev->read(currentBlock, dmapBlock);
+            if (this->blockDev->write(lastBlock, dmapBlock) != 0) {
+                return EIO;
+            }
+            if (this->blockDev->read(currentBlock, dmapBlock) != 0) {
+                return EIO;
+            }
             lastBlock = currentBlock;
         }
         dmapBlock[(arr[i] - FILES_INDEX) % BD_BLOCK_SIZE] = 'A';
     }
-    this->blockDev->write(lastBlock, dmapBlock);
+    if (this->blockDev->write(lastBlock, dmapBlock) != 0) {
+        return EIO;
+    }
+    return 0;
 }
 
 /**
@@ -145,6 +173,7 @@ FAT::~FAT() {}
 /**
  * Reads next address from the given address.
  *
+ * @return     the next address.
  */
 uint16_t FAT::read(uint16_t curAddress) {
 #ifdef DEBUG
@@ -152,9 +181,9 @@ uint16_t FAT::read(uint16_t curAddress) {
 #endif
     uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
     uint16_t index = (curAddress - FILES_INDEX) % 256;
-    uint16_t *fatBlock = (uint16_t*) malloc(BD_BLOCK_SIZE);
+    uint16_t *fatBlock = (uint16_t *)malloc(BD_BLOCK_SIZE);
 
-    blockDev->read(blockAddr, (char*)fatBlock);
+    blockDev->read(blockAddr, (char *)fatBlock);
     uint16_t res = fatBlock[index];
     free(fatBlock);
     return res;
@@ -170,11 +199,11 @@ void FAT::write(uint16_t curAddress, uint16_t nextAddress) {
 #endif
     uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
     uint16_t index = (curAddress - FILES_INDEX) % 256;
-    uint16_t *fatBlock = (uint16_t*) malloc(BD_BLOCK_SIZE);
+    uint16_t *fatBlock = (uint16_t *)malloc(BD_BLOCK_SIZE);
 
-    this->blockDev->read(blockAddr, (char*)fatBlock);
+    this->blockDev->read(blockAddr, (char *)fatBlock);
     fatBlock[index] = nextAddress;
-    this->blockDev->write(blockAddr, (char*)fatBlock);
+    this->blockDev->write(blockAddr, (char *)fatBlock);
     free(fatBlock);
 }
 

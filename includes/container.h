@@ -39,9 +39,9 @@ class DMAP {
    public:
     DMAP(BlockDevice *blockDev);
     ~DMAP();
-    void create();
-    void getFree(uint16_t num, uint16_t *arr);
-    void allocate(uint16_t num, uint16_t *arr);
+    int create();
+    int getFree(uint16_t num, uint16_t *arr);
+    int allocate(uint16_t num, uint16_t *arr);
 };
 
 bool checkBoundary(int address);
