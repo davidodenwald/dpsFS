@@ -72,6 +72,8 @@ TSRCDIR = unittests
 UNITTEST_OBJS = $(OBJDIR)/main.o \
 	$(OBJDIR)/blockdevice.o \
 	$(OBJDIR)/test-blockdevice.o \
+	$(OBJDIR)/test-superblock.o \
+	$(OBJDIR)/test-dmap.o \
 	$(OBJDIR)/myfs.o \
 	$(OBJDIR)/test-myfs.o \
 	$(OBJDIR)/helper.o \

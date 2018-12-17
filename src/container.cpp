@@ -70,7 +70,7 @@ int DMAP::create() {
             return EIO;
         }
     }
-    // last block only represents 63 blocks
+    // last block only represents 63 blocks - rest is filled with 0 bytes.
     memset(dmapBlock, '0', BD_BLOCK_SIZE);
     memset(dmapBlock, 'F', FILES_SIZE % BD_BLOCK_SIZE);
     if (this->blockDev->write(DMAP_INDEX + DMAP_SIZE-1, dmapBlock) != 0) {
