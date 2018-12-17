@@ -203,10 +203,7 @@ int FAT::write(uint16_t curAddress, uint16_t nextAddress) {
     uint16_t index = (curAddress - FILES_INDEX) % 256;
     uint16_t *fatBlock = (uint16_t *)malloc(BD_BLOCK_SIZE);
 
-    if (this->blockDev->read(blockAddr, (char *)fatBlock) != 0) {
-        free(fatBlock);
-        return EIO;
-    }
+    this->blockDev->read(blockAddr, (char *)fatBlock);
     fatBlock[index] = nextAddress;
     if (this->blockDev->write(blockAddr, (char *)fatBlock) != 0) {
         free(fatBlock);
