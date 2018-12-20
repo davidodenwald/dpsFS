@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
         char *filePath = argv[i];
 
         // save name of file
-        if (sizeof(basename(filePath)) > NAME_LENGTH) {
+        if (strlen(basename(filePath)) > NAME_LENGTH) {
             fprintf(stderr, "error: filename %s is too long\n", filePath);
             exit(ENAMETOOLONG);
         }
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
         fat.write(blocks[k - 1], 0);
 
         // RootDir
-        rd.write(i - 2, file);
+        rd.write(rd.len(), file);
 
         // write Bytes
         std::ifstream fileStream(filePath);

@@ -44,7 +44,7 @@ MyFS::MyFS() {
     this->logFile = stderr;
     this->openFiles = 0;
 
-    this->buffer = (char*)malloc(BD_BLOCK_SIZE);
+    this->buffer = (char *)malloc(BD_BLOCK_SIZE);
     this->bufIndex = 0;
 
     this->blockDev = new BlockDevice();
@@ -105,9 +105,34 @@ int MyFS::fuseReadlink(const char *path, char *link, size_t size) {
 
 int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
+    LOGF("path: %s; mode: %d; dev: %lu;", path, mode, dev);
 
-    // TODO: Implement this!
+    dpsFile *file = (dpsFile *)calloc(1, BD_BLOCK_SIZE);
+    strcpy(file->name, basename(strdup(path)));
+    file->stat.st_mode = mode;
 
+    if (strlen(file->name) > NAME_LENGTH) {
+        free(file);
+        RETURN(-ENAMETOOLONG);
+    }
+
+    if (rootDir->exists(file->name) == 0) {
+        free(file);
+        RETURN(-EEXIST);
+    }
+
+    file->stat.st_blksize = 512;
+    file->stat.st_size = 0;
+    file->stat.st_blocks = 0;
+    file->stat.st_nlink = 1;
+    file->firstBlock = 0;
+
+    if (rootDir->write(rootDir->len(), file) != 0) {
+        free(file);
+        RETURN(-EIO);
+    }
+
+    free(file);
     RETURN(0);
 }
 
@@ -191,7 +216,7 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
     LOGF("Path: %s | Size: %ld | Offset: %ld", path, size, offset);
 
     uint16_t block = fileInfo->fh;
-    
+
     int read = 0;
     while ((size_t)read < (size + offset)) {
         memset(this->buffer, 0, BD_BLOCK_SIZE);
