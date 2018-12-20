@@ -40,7 +40,9 @@ class DMAP {
     DMAP(BlockDevice *blockDev);
     ~DMAP();
     int create();
+    int getFree(uint16_t *pos);
     int getFree(uint16_t num, uint16_t *arr);
+    int allocate(uint16_t pos);
     int allocate(uint16_t num, uint16_t *arr);
 };
 

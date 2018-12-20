@@ -73,10 +73,40 @@ int DMAP::create() {
     // last block only represents 63 blocks - rest is filled with 0 bytes.
     memset(dmapBlock, '0', BD_BLOCK_SIZE);
     memset(dmapBlock, 'F', FILES_SIZE % BD_BLOCK_SIZE);
-    if (this->blockDev->write(DMAP_INDEX + DMAP_SIZE-1, dmapBlock) != 0) {
-            return EIO;
+    if (this->blockDev->write(DMAP_INDEX + DMAP_SIZE - 1, dmapBlock) != 0) {
+        return EIO;
     }
     return 0;
+}
+
+/**
+ * Gets a free block.
+ *
+ * @param pos   The variable in which the block is stored.
+ *
+ * @return      0 if successful.
+ *              EIO when read failed.
+ *              ENOSPC when no free block is available.
+ */
+int DMAP::getFree(uint16_t *pos) {
+#ifdef DEBUG
+    fprintf(stderr, "Get Free block from DMAP\n");
+#endif
+    char dmapBlock[BD_BLOCK_SIZE];
+
+    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
+        if (this->blockDev->read(i + DMAP_INDEX, dmapBlock) != 0) {
+            return EIO;
+        }
+
+        for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
+            if (dmapBlock[k] == 'F') {
+                *pos = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
+                return 0;
+            }
+        }
+    }
+    return ENOSPC;
 }
 
 /**
@@ -85,8 +115,9 @@ int DMAP::create() {
  * @param num   The number of blocks requested.
  * @param *arr  The array in which the blocks are stored.
  *
- * @return      the number of blocks returned.
- *              -EIO when read failed.
+ * @return      0 if successful.
+ *              EIO when read failed.
+ *              ENOSPC when not enough free blocks are available.
  */
 int DMAP::getFree(uint16_t num, uint16_t *arr) {
 #ifdef DEBUG
@@ -97,20 +128,48 @@ int DMAP::getFree(uint16_t num, uint16_t *arr) {
 
     for (uint16_t i = 0; i < DMAP_SIZE; i++) {
         if (this->blockDev->read(i + DMAP_INDEX, dmapBlock) != 0) {
-            return -EIO;
+            return EIO;
         }
 
         for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
             if (dmapBlock[k] == 'F') {
                 if (found == num) {
-                    return found;
+                    return 0;
                 }
                 arr[found] = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
                 found++;
             }
         }
     }
-    return found;
+    if (found == num) {
+        return 0;
+    }
+    return ENOSPC;
+}
+
+/**
+ * Marks the given block as allocated.
+ *
+ * @param pos  The block which must be written.
+ *
+ *  @return     0 when successful.
+ *              EIO when read failed.
+ */
+int DMAP::allocate(uint16_t pos) {
+#ifdef DEBUG
+    fprintf(stderr, "Allocate block %d in DMAP\n", pos);
+#endif
+    char dmapBlock[BD_BLOCK_SIZE];
+    uint16_t block = (pos - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;;
+
+    if (this->blockDev->read(block, dmapBlock) != 0) {
+        return EIO;
+    }
+    dmapBlock[(pos - FILES_INDEX) % BD_BLOCK_SIZE] = 'A';
+    if (this->blockDev->write(block, dmapBlock) != 0) {
+        return EIO;
+    }
+    return 0;
 }
 
 /**
@@ -191,7 +250,7 @@ uint16_t FAT::read(uint16_t curAddress) {
 
 /**
  * Writes next address to the given address.
- * 
+ *
  * @return  0 when successful.
  *          EIO when write failed.
  */
