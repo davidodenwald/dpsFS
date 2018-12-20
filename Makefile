@@ -74,6 +74,7 @@ UNITTEST_OBJS = $(OBJDIR)/main.o \
 	$(OBJDIR)/test-blockdevice.o \
 	$(OBJDIR)/test-superblock.o \
 	$(OBJDIR)/test-dmap.o \
+	$(OBJDIR)/test-fat.o \
 	$(OBJDIR)/myfs.o \
 	$(OBJDIR)/test-myfs.o \
 	$(OBJDIR)/helper.o \

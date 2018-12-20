@@ -43,6 +43,10 @@ MyFS *MyFS::Instance() {
 MyFS::MyFS() {
     this->logFile = stderr;
     this->openFiles = 0;
+
+    this->buffer = (char*)malloc(BD_BLOCK_SIZE);
+    this->bufIndex = 0;
+
     this->blockDev = new BlockDevice();
     this->superBlock = new Superblock(this->blockDev);
     this->dmap = new DMAP(this->blockDev);
@@ -51,6 +55,8 @@ MyFS::MyFS() {
 }
 
 MyFS::~MyFS() {
+    free(this->buffer);
+
     this->blockDev->close();
     delete this->blockDev;
     delete this->superBlock;
@@ -164,7 +170,7 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     this->openFiles++;
     if (this->openFiles > NUM_OPEN_FILES) {
         this->openFiles--;
-        LOGF("error: cannot open file %s. Limit exceeded.\n", path);
+        LOGF("error: cannot open file %s. Limit exceeded.", path);
         RETURN(-EMFILE);
     }
     dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
@@ -182,15 +188,13 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
                    struct fuse_file_info *fileInfo) {
     LOGM();
-    LOGF("Path: %s | Size: %ld | Offset: %ld\n", path, size, offset);
+    LOGF("Path: %s | Size: %ld | Offset: %ld", path, size, offset);
 
-    uint16_t block;
+    uint16_t block = fileInfo->fh;
+    
     int read = 0;
-    block = fileInfo->fh;
-    char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
-
     while ((size_t)read < (size + offset)) {
-        memset(tmpBuf, 0, BD_BLOCK_SIZE);
+        memset(this->buffer, 0, BD_BLOCK_SIZE);
         read += BD_BLOCK_SIZE;
         if (read < offset) {
             block = this->fat->read(block);
@@ -199,17 +203,19 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
         if (block == 0) {
             break;
         }
-        this->blockDev->read(block, tmpBuf);
+        if (block != this->bufIndex) {
+            this->blockDev->read(block, this->buffer);
+            this->bufIndex = block;
+        }
         block = this->fat->read(block);
-        memcpy(buf, tmpBuf, BD_BLOCK_SIZE);
+        memcpy(buf, this->buffer, BD_BLOCK_SIZE);
         buf += BD_BLOCK_SIZE;
     }
-    free(tmpBuf);
 
     // rewind buf
-    buf -= read - (int)offset;
-    LOGF("read bytes: %d\n", read - (int)offset);
-    RETURN(read - (int)offset);
+    read = read - (int)offset;
+    buf -= read;
+    RETURN(read);
 }
 
 int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
@@ -267,7 +273,7 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
         dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
         for (int i = 0; i < rootDir->len(); i++) {
             rootDir->read(i, tmpFile);
-            filler(buf, tmpFile->name, &tmpFile->stat, 0);
+            filler(buf, tmpFile->name, NULL, 0);
         }
         free(tmpFile);
     }

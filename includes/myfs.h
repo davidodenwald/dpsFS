@@ -21,7 +21,10 @@ class MyFS {
     static MyFS *_instance;
     FILE *logFile;
 
-    int openFiles;
+    uint16_t openFiles;
+
+    char *buffer;
+    uint16_t bufIndex;
 
     BlockDevice *blockDev;
     Superblock *superBlock;
