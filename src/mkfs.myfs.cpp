@@ -92,8 +92,7 @@ int main(int argc, char *argv[]) {
         // DMAP
         uint16_t *blocks =
             (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
-        if (dmap.getFree(file->stat.st_blocks, blocks) !=
-            file->stat.st_blocks) {
+        if (dmap.getFree(file->stat.st_blocks, blocks) != 0) {
             fprintf(stderr,
                     "error: not enough space for file %s in filesystem\n",
                     filePath);
