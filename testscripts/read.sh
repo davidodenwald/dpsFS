@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MOUNTDIR=mountdir
-TESTFILE=Makefile
+TESTFILE=big.txt
 
 ./mkfs.myfs container $TESTFILE
 ./mount.myfs container logfile $MOUNTDIR -s
