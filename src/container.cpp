@@ -53,10 +53,7 @@ DMAP::DMAP(BlockDevice *blockDev) {
     this->blockDev = blockDev;
     this->dmap = (char *)malloc(DMAP_SIZE * BD_BLOCK_SIZE);
     for (int i = 0; i < DMAP_SIZE; i++) {
-        int err = this->blockDev->read(i + DMAP_INDEX, this->dmap);
-        if (err != 0) {
-            memset(this->dmap, 'F', BD_BLOCK_SIZE);
-        }
+        this->blockDev->read(i + DMAP_INDEX, this->dmap);
         this->dmap += BD_BLOCK_SIZE;
     }
     this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
@@ -69,6 +66,18 @@ DMAP::~DMAP() {
     }
     this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
     free(this->dmap);
+}
+
+int DMAP::create() {
+    memset(this->dmap, 'F', FILES_SIZE);
+    for (int i = 0; i < DMAP_SIZE; i++) {
+        if (this->blockDev->write(i + DMAP_INDEX, this->dmap) != 0) {
+            return EIO;
+        }
+        this->dmap += BD_BLOCK_SIZE;
+    }
+    this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
+    return 0;
 }
 
 /**

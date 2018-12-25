@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fstream>
 
 #ifdef __APPLE__
@@ -36,7 +37,10 @@ int main(int argc, char *argv[]) {
     }
 
     // clear container file
-    fclose(fopen(argv[1], "w"));
+    int fileSize = 33554432;
+    FILE *fp = fopen(argv[1], "w");
+    ftruncate(fileno(fp), fileSize);
+    fclose(fp);
 
     if (argc - 2 > NUM_DIR_ENTRIES) {
         fprintf(stderr, "error: only %d files are allowed\n", NUM_DIR_ENTRIES);
@@ -47,6 +51,7 @@ int main(int argc, char *argv[]) {
     blockDev.open(argv[1]);
     Superblock sb = Superblock(&blockDev);
     DMAP dmap = DMAP(&blockDev);
+    dmap.create();
     FAT fat = FAT(&blockDev);
     RootDir rd = RootDir(&blockDev, 0);
 
