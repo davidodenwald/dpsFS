@@ -295,7 +295,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
     uint16_t *blocks = (uint16_t *)malloc(blockCount * sizeof(uint16_t));
     int offsetCount = 0;
     int blockIndex = 0;
-    for (int tmpBlock = tmpFile->firstBlock; tmpBlock != 0; tmpBlock = fat->read(tmpBlock)) {
+    for (int tmpBlock = tmpFile->firstBlock; tmpBlock != 0 && blockIndex < blockCount; tmpBlock = fat->read(tmpBlock)) {
         if (offsetCount < blockOffset) {
             offsetCount++;
         } else {
