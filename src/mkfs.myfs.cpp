@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
     blockDev.open(argv[1]);
     Superblock sb = Superblock(&blockDev);
     DMAP dmap = DMAP(&blockDev);
-    dmap.create();
     FAT fat = FAT(&blockDev);
     RootDir rd = RootDir(&blockDev, 0);
 

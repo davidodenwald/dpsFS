@@ -10,11 +10,8 @@ TEST_CASE("create/getFree/allocate", "[DMAP]") {
     DMAP dmap = DMAP(&blockDev);
 
     SECTION("dmap single block") {
-        int err = dmap.create();
-        REQUIRE(err == 0);
-
         uint16_t pos = 0;
-        err = dmap.getFree(&pos);
+        int err = dmap.getFree(&pos);
         REQUIRE(err == 0);
         REQUIRE(pos == FILES_INDEX);
 
@@ -27,12 +24,9 @@ TEST_CASE("create/getFree/allocate", "[DMAP]") {
     }
 
     SECTION("dmap multiple blocks") {
-        int err = dmap.create();
-        REQUIRE(err == 0);
-
         // test with the biggest possible filesize
         uint16_t arr[FILES_SIZE];
-        err = dmap.getFree(FILES_SIZE, arr);
+        int err = dmap.getFree(FILES_SIZE, arr);
         REQUIRE(err == 0);
         REQUIRE(arr[0] == FILES_INDEX);
         REQUIRE(arr[FILES_SIZE / 2] == FILES_INDEX + FILES_SIZE / 2);

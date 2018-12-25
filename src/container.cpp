@@ -49,34 +49,26 @@ int Superblock::write(sbStats *content) {
 /**
  * Object representing the DMAP sector of the container.
  */
-DMAP::DMAP(BlockDevice *blockDev) { this->blockDev = blockDev; }
-
-DMAP::~DMAP() {}
-
-/**
- * Initializes the DMAP sector.
- * @return  0 when successful.
- *          EIO when write failed.
- */
-int DMAP::create() {
-#ifdef DEBUG
-    fprintf(stderr, "Creating DMAP\n");
-#endif
-    char dmapBlock[BD_BLOCK_SIZE];
-    memset(dmapBlock, 'F', BD_BLOCK_SIZE);
-
-    for (int i = 0; i < DMAP_SIZE - 1; i++) {
-        if (this->blockDev->write(i + DMAP_INDEX, dmapBlock) != 0) {
-            return EIO;
+DMAP::DMAP(BlockDevice *blockDev) {
+    this->blockDev = blockDev;
+    this->dmap = (char *)malloc(DMAP_SIZE * BD_BLOCK_SIZE);
+    for (int i = 0; i < DMAP_SIZE; i++) {
+        int err = this->blockDev->read(i + DMAP_INDEX, this->dmap);
+        if (err != 0) {
+            memset(this->dmap, 'F', BD_BLOCK_SIZE);
         }
+        this->dmap += BD_BLOCK_SIZE;
     }
-    // last block only represents 63 blocks - rest is filled with 0 bytes.
-    memset(dmapBlock, '0', BD_BLOCK_SIZE);
-    memset(dmapBlock, 'F', FILES_SIZE % BD_BLOCK_SIZE);
-    if (this->blockDev->write(DMAP_INDEX + DMAP_SIZE - 1, dmapBlock) != 0) {
-        return EIO;
+    this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
+}
+
+DMAP::~DMAP() {
+    for (int i = 0; i < DMAP_SIZE; i++) {
+        this->blockDev->write(i + DMAP_INDEX, this->dmap);
+        this->dmap += BD_BLOCK_SIZE;
     }
-    return 0;
+    this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
+    free(this->dmap);
 }
 
 /**
@@ -92,18 +84,10 @@ int DMAP::getFree(uint16_t *pos) {
 #ifdef DEBUG
     fprintf(stderr, "Get Free block from DMAP\n");
 #endif
-    char dmapBlock[BD_BLOCK_SIZE];
-
-    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
-        if (this->blockDev->read(i + DMAP_INDEX, dmapBlock) != 0) {
-            return EIO;
-        }
-
-        for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
-            if (dmapBlock[k] == 'F') {
-                *pos = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
-                return 0;
-            }
+    for (int i = 0; i < FILES_SIZE; i++) {
+        if (this->dmap[i] == 'F') {
+            *pos = i + FILES_INDEX;
+            return 0;
         }
     }
     return ENOSPC;
@@ -123,22 +107,14 @@ int DMAP::getFree(uint16_t num, uint16_t *arr) {
 #ifdef DEBUG
     fprintf(stderr, "Get Free %d blocks from DMAP\n", num);
 #endif
-    char dmapBlock[BD_BLOCK_SIZE];
     uint16_t found = 0;
-
-    for (uint16_t i = 0; i < DMAP_SIZE; i++) {
-        if (this->blockDev->read(i + DMAP_INDEX, dmapBlock) != 0) {
-            return EIO;
+    for (int i = 0; i < FILES_SIZE; i++) {
+        if (found == num) {
+            return 0;
         }
-
-        for (uint16_t k = 0; k < BD_BLOCK_SIZE; k++) {
-            if (dmapBlock[k] == 'F') {
-                if (found == num) {
-                    return 0;
-                }
-                arr[found] = (i * BD_BLOCK_SIZE + k) + FILES_INDEX;
-                found++;
-            }
+        if (this->dmap[i] == 'F') {
+            arr[found] = i + FILES_INDEX;
+            found++;
         }
     }
     if (found == num) {
@@ -159,17 +135,7 @@ int DMAP::allocate(uint16_t pos) {
 #ifdef DEBUG
     fprintf(stderr, "Allocate block %d in DMAP\n", pos);
 #endif
-    char dmapBlock[BD_BLOCK_SIZE];
-    uint16_t block = (pos - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;
-    ;
-
-    if (this->blockDev->read(block, dmapBlock) != 0) {
-        return EIO;
-    }
-    dmapBlock[(pos - FILES_INDEX) % BD_BLOCK_SIZE] = 'A';
-    if (this->blockDev->write(block, dmapBlock) != 0) {
-        return EIO;
-    }
+    this->dmap[pos - FILES_INDEX] = 'A';
     return 0;
 }
 
@@ -186,29 +152,8 @@ int DMAP::allocate(uint16_t num, uint16_t *arr) {
 #ifdef DEBUG
     fprintf(stderr, "Allocate %d blocks in DMAP\n", num);
 #endif
-    uint16_t currentBlock;
-    int lastBlock = 0 + DMAP_INDEX;
-
-    char dmapBlock[BD_BLOCK_SIZE];
-    if (this->blockDev->read(lastBlock, dmapBlock) != 0) {
-        return EIO;
-    }
-
     for (uint16_t i = 0; i < num; i++) {
-        currentBlock = (arr[i] - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;
-        if (currentBlock != lastBlock) {
-            if (this->blockDev->write(lastBlock, dmapBlock) != 0) {
-                return EIO;
-            }
-            if (this->blockDev->read(currentBlock, dmapBlock) != 0) {
-                return EIO;
-            }
-            lastBlock = currentBlock;
-        }
-        dmapBlock[(arr[i] - FILES_INDEX) % BD_BLOCK_SIZE] = 'A';
-    }
-    if (this->blockDev->write(lastBlock, dmapBlock) != 0) {
-        return EIO;
+        this->dmap[arr[i] - FILES_INDEX] = 'A';
     }
     return 0;
 }
