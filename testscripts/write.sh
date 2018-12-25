@@ -29,5 +29,13 @@ else
     echo -e "\e[91mAppending to a file failed.\e[39m"
 fi
 
+cat big.txt > $TESTFILE
+if [ $? -eq 0 ]; then
+    echo -e "\e[92mAppending to a file was successful.\e[39m"
+    cat $TESTFILE
+else
+    echo -e "\e[91mAppending to a file failed.\e[39m"
+fi
+
 sleep 0.5
 fusermount --unmount mountdir

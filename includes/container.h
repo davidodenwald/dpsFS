@@ -75,9 +75,22 @@ class RootDir {
     ~RootDir();
     int len();
     int get(const char *name, dpsFile *fileData);
+    int get(const char *name, dpsFile *fileData, uint16_t *num);
     int exists(const char *name);
     int read(uint16_t num, dpsFile *fileData);
     int write(uint16_t num, dpsFile *fileData);
+};
+
+class Files {
+   private:
+    BlockDevice *blockDev;
+
+   public:
+    Files(BlockDevice *blockDev);
+    ~Files();
+    int read(uint16_t *blocks, uint16_t num, uint16_t offset, char *buf);
+    int write(uint16_t *blocks, uint16_t num, uint16_t offset, size_t size,
+              const char *buf);
 };
 
 #endif /* container_h */

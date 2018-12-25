@@ -23,14 +23,12 @@ class MyFS {
 
     uint16_t openFiles;
 
-    char *buffer;
-    uint16_t bufIndex;
-
     BlockDevice *blockDev;
     Superblock *superBlock;
     RootDir *rootDir;
     DMAP *dmap;
     FAT *fat;
+    Files *files;
 
    public:
     static MyFS *Instance();

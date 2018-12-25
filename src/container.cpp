@@ -160,7 +160,8 @@ int DMAP::allocate(uint16_t pos) {
     fprintf(stderr, "Allocate block %d in DMAP\n", pos);
 #endif
     char dmapBlock[BD_BLOCK_SIZE];
-    uint16_t block = (pos - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;;
+    uint16_t block = (pos - FILES_INDEX) / BD_BLOCK_SIZE + DMAP_INDEX;
+    ;
 
     if (this->blockDev->read(block, dmapBlock) != 0) {
         return EIO;
@@ -288,6 +289,33 @@ RootDir::~RootDir() {}
 int RootDir::len() { return this->fileCount; }
 
 /**
+ * Gets the fileinformation and number of entry by filename.
+ * The number can be used for overwriting this entry.
+ *
+ * @param *name     The name of the file.
+ * @param *num      The file number will be stored in here.
+ *
+ * @return          0 when the file was found.
+ *                  ENOENT when the file wasn't found.
+ *                  EIO when read failed.
+ */
+int RootDir::get(const char *name, dpsFile *fileData, uint16_t *num) {
+#ifdef DEBUG
+    fprintf(stderr, "get fileInfo by name for %s from RootDir\n", name);
+#endif
+    for (int i = 0; i < this->len(); i++) {
+        if (this->read(i, fileData) != 0) {
+            return EIO;
+        }
+        if (strcmp(fileData->name, name) == 0) {
+            *num = i;
+            return 0;
+        }
+    }
+    return ENOENT;
+}
+
+/**
  * Gets the fileinformation by filename.
  *
  * @param *name     The name of the file.
@@ -382,5 +410,49 @@ int RootDir::write(uint16_t num, dpsFile *fileData) {
         return EIO;
     }
     this->fileCount++;
+    return 0;
+}
+
+Files::Files(BlockDevice *blockDev) { this->blockDev = blockDev; }
+
+Files::~Files() {}
+
+int Files::read(uint16_t *blocks, uint16_t num, uint16_t offset, char *buf) {
+    for (int i = 0; i < num; i++) {
+        if (this->blockDev->read(blocks[i], buf) != 0) {
+            return EIO;
+        }
+        buf += BD_BLOCK_SIZE;
+    }
+    buf -= BD_BLOCK_SIZE * num - offset;
+    return 0;
+}
+
+int Files::write(uint16_t *blocks, uint16_t num, uint16_t offset, size_t size,
+                 const char *buf) {
+    char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
+    for (int i = 0; i < num; i++) {
+        memset(tmpBuf, 0, BD_BLOCK_SIZE);
+        this->blockDev->read(blocks[i], tmpBuf);
+        if (i == 0) {
+            tmpBuf += offset;
+        }
+
+        int written = 0;
+        while ((size_t)written < size && written < BD_BLOCK_SIZE) {
+            *tmpBuf = *buf;
+            buf++;
+            tmpBuf++;
+            written++;
+        }
+        if (i == 0) {
+            tmpBuf -= written + offset;
+        } else {
+            tmpBuf -= written;
+        }
+        this->blockDev->write(blocks[i], tmpBuf);
+        size -= BD_BLOCK_SIZE;
+    }
+    free(tmpBuf);
     return 0;
 }
