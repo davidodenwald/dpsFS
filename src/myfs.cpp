@@ -128,6 +128,11 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
         RETURN(-EIO);
     }
 
+    sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
+    s->fileCount = this->rootDir->len();
+    this->superBlock->write(s);
+    free(s);
+
     free(file);
     RETURN(0);
 }

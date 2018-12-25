@@ -336,6 +336,11 @@ int RootDir::write(uint16_t num, dpsFile *fileData) {
     if (num > NUM_DIR_ENTRIES || num < 0) {
         return EFAULT;
     }
+
+    if (this->exists(fileData->name) != 0) {
+        this->fileCount++;
+    }
+
     fileData->stat.st_atime = time(NULL);
     fileData->stat.st_ctime = time(NULL);
     fileData->stat.st_uid = getgid();
@@ -345,7 +350,6 @@ int RootDir::write(uint16_t num, dpsFile *fileData) {
     if (this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData) != 0) {
         return EIO;
     }
-    this->fileCount++;
     return 0;
 }
 
