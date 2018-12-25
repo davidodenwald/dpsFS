@@ -257,7 +257,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
         blockCount = size / BD_BLOCK_SIZE + 1;
     }
     uint16_t blockOffset = offset / BD_BLOCK_SIZE;
-    uint16_t newBlockCount = blockOffset + blockCount - tmpFile->stat.st_blocks;
+    int newBlockCount = blockOffset + blockCount - tmpFile->stat.st_blocks;
 
     if (newBlockCount > 0) {
         uint16_t *newBlocks = (uint16_t *)malloc(newBlockCount * sizeof(uint16_t));
