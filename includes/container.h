@@ -46,11 +46,10 @@ class DMAP {
     int allocate(uint16_t num, uint16_t *arr);
 };
 
-bool checkBoundary(int address);
-
 class FAT {
    private:
     BlockDevice *blockDev;
+    uint16_t *fat;
 
    public:
     FAT(BlockDevice *blockDev);

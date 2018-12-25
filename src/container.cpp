@@ -159,21 +159,29 @@ int DMAP::allocate(uint16_t num, uint16_t *arr) {
 }
 
 /**
- * Checks if the address is a valid file-block address.
- */
-bool checkBoundary(int address) {
-    if (address < FILES_INDEX || address > FILES_SIZE) {
-        return false;
-    }
-    return true;
-}
-
-/**
  * Object representing the FAT sector of the container.
  */
-FAT::FAT(BlockDevice *blockDev) { this->blockDev = blockDev; }
+FAT::FAT(BlockDevice *blockDev) {
+    this->blockDev = blockDev;
+    this->fat = (uint16_t *)malloc(FAT_SIZE * BD_BLOCK_SIZE);
+    for (int i = 0; i < FAT_SIZE; i++) {
+        int err = this->blockDev->read(i + FAT_INDEX, (char *)this->fat);
+        if (err != 0) {
+            memset(this->fat, 0, BD_BLOCK_SIZE);
+        }
+        this->fat += BD_BLOCK_SIZE / 2;
+    }
+    this->fat -= FAT_SIZE * BD_BLOCK_SIZE / 2;
+}
 
-FAT::~FAT() {}
+FAT::~FAT() {
+    for (int i = 0; i < FAT_SIZE; i++) {
+        this->blockDev->write(i + FAT_INDEX, (char *)this->fat);
+        this->fat += BD_BLOCK_SIZE / 2;
+    }
+    this->fat -= FAT_SIZE * BD_BLOCK_SIZE / 2;
+    free(this->fat);
+}
 
 /**
  * Reads next address from the given address.
@@ -184,14 +192,7 @@ uint16_t FAT::read(uint16_t curAddress) {
 #ifdef DEBUG
     fprintf(stderr, "Read address %d from Fat\n", curAddress);
 #endif
-    uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
-    uint16_t index = (curAddress - FILES_INDEX) % 256;
-    uint16_t *fatBlock = (uint16_t *)malloc(BD_BLOCK_SIZE);
-
-    blockDev->read(blockAddr, (char *)fatBlock);
-    uint16_t res = fatBlock[index];
-    free(fatBlock);
-    return res;
+    return this->fat[curAddress - FILES_INDEX];
 }
 
 /**
@@ -204,17 +205,7 @@ int FAT::write(uint16_t curAddress, uint16_t nextAddress) {
 #ifdef DEBUG
     fprintf(stderr, "Write address %d -> %d to Fat\n", curAddress, nextAddress);
 #endif
-    uint16_t blockAddr = (curAddress - FILES_INDEX) / 256 + FAT_INDEX;
-    uint16_t index = (curAddress - FILES_INDEX) % 256;
-    uint16_t *fatBlock = (uint16_t *)malloc(BD_BLOCK_SIZE);
-
-    this->blockDev->read(blockAddr, (char *)fatBlock);
-    fatBlock[index] = nextAddress;
-    if (this->blockDev->write(blockAddr, (char *)fatBlock) != 0) {
-        free(fatBlock);
-        return EIO;
-    }
-    free(fatBlock);
+    this->fat[curAddress - FILES_INDEX] = nextAddress;
     return 0;
 }
 
