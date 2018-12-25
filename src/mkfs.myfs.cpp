@@ -89,38 +89,41 @@ int main(int argc, char *argv[]) {
             file->stat.st_blocks = file->stat.st_size / BD_BLOCK_SIZE + 1;
         }
 
-        // DMAP
-        uint16_t *blocks =
-            (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
-        if (dmap.getFree(file->stat.st_blocks, blocks) != 0) {
-            fprintf(stderr,
-                    "error: not enough space for file %s in filesystem\n",
-                    filePath);
-        }
-        dmap.allocate(file->stat.st_blocks, blocks);
-        file->firstBlock = blocks[0];
+        if (file->stat.st_blocks == 0) {
+            file->firstBlock = 0;
+        } else {
+            // DMAP
+            uint16_t *blocks =
+                (uint16_t *)malloc(sizeof(uint16_t) * file->stat.st_blocks);
+            if (dmap.getFree(file->stat.st_blocks, blocks) != 0) {
+                fprintf(stderr,
+                        "error: not enough space for file %s in filesystem\n",
+                        filePath);
+            }
+            dmap.allocate(file->stat.st_blocks, blocks);
+            file->firstBlock = blocks[0];
 
-        // FAT
-        int k;
-        for (k = 1; k < file->stat.st_blocks; k++) {
-            fat.write(blocks[k - 1], blocks[k]);
-        }
-        fat.write(blocks[k - 1], 0);
+            // FAT
+            int k = 1;
+            for (; k < file->stat.st_blocks; k++) {
+                fat.write(blocks[k - 1], blocks[k]);
+            }
+            fat.write(blocks[k - 1], 0);
 
+            // write Bytes
+            std::ifstream fileStream(filePath);
+            char buffer[BD_BLOCK_SIZE];
+            for (int i = 0; i < file->stat.st_blocks; i++) {
+                // set all array items to 0
+                memset(buffer, 0, sizeof(buffer));
+                fileStream.read(buffer, BD_BLOCK_SIZE);
+                blockDev.write(blocks[i], buffer);
+            }
+            fileStream.close();
+            free(blocks);
+        }
         // RootDir
         rd.write(rd.len(), file);
-
-        // write Bytes
-        std::ifstream fileStream(filePath);
-        char buffer[BD_BLOCK_SIZE];
-        for (int i = 0; i < file->stat.st_blocks; i++) {
-            // set all array items to 0
-            memset(buffer, 0, sizeof(buffer));
-            fileStream.read(buffer, BD_BLOCK_SIZE);
-            blockDev.write(blocks[i], buffer);
-        }
-        fileStream.close();
-        free(blocks);
         free(file);
     }
 
