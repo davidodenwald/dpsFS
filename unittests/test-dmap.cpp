@@ -3,18 +3,17 @@
 
 #define CONTAINER "/tmp/bd.bin"
 
-TEST_CASE("create/getFree/allocate", "[DMAP]") {
+TEST_CASE("create/getFree/allocate/toFile", "[DMAP]") {
     fclose(fopen(CONTAINER, "w"));
     BlockDevice blockDev = BlockDevice();
     blockDev.open(CONTAINER);
     DMAP dmap = DMAP(&blockDev);
 
     SECTION("dmap single block") {
-        int err = dmap.create();
-        REQUIRE(err == 0);
-
+        dmap.create();
+    
         uint16_t pos = 0;
-        err = dmap.getFree(&pos);
+        int err = dmap.getFree(&pos);
         REQUIRE(err == 0);
         REQUIRE(pos == FILES_INDEX);
 
@@ -27,12 +26,11 @@ TEST_CASE("create/getFree/allocate", "[DMAP]") {
     }
 
     SECTION("dmap multiple blocks") {
-        int err = dmap.create();
-        REQUIRE(err == 0);
-
+        dmap.create();
+        
         // test with the biggest possible filesize
         uint16_t arr[FILES_SIZE];
-        err = dmap.getFree(FILES_SIZE, arr);
+        int err = dmap.getFree(FILES_SIZE, arr);
         REQUIRE(err == 0);
         REQUIRE(arr[0] == FILES_INDEX);
         REQUIRE(arr[FILES_SIZE / 2] == FILES_INDEX + FILES_SIZE / 2);
@@ -45,5 +43,19 @@ TEST_CASE("create/getFree/allocate", "[DMAP]") {
         uint16_t arr2[5];
         err = dmap.getFree(5, arr2);
         REQUIRE(err != 0);
+    }
+
+    SECTION("toFile") {
+        dmap.create();
+
+        uint16_t pos = 0;
+        dmap.getFree(&pos);
+        REQUIRE(pos == FILES_INDEX);
+        dmap.allocate(pos);
+        dmap.toFile();
+        
+        DMAP dmap2 = DMAP(&blockDev);
+        dmap2.getFree(&pos);
+        REQUIRE(pos == FILES_INDEX + 1);
     }
 }

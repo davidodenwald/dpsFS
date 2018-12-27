@@ -37,10 +37,7 @@ int main(int argc, char *argv[]) {
     }
 
     // clear container file
-    int fileSize = 33554432;
-    FILE *fp = fopen(argv[1], "w");
-    ftruncate(fileno(fp), fileSize);
-    fclose(fp);
+    fclose(fopen(argv[1], "w"));
 
     if (argc - 2 > NUM_DIR_ENTRIES) {
         fprintf(stderr, "error: only %d files are allowed\n", NUM_DIR_ENTRIES);
@@ -137,6 +134,8 @@ int main(int argc, char *argv[]) {
     sb.write(s);
     free(s);
 
+    dmap.toFile();
+    fat.toFile();
     blockDev.close();
     return 0;
 }

@@ -3,21 +3,33 @@
 
 #define CONTAINER "/tmp/bd.bin"
 
-TEST_CASE("read/write", "[fat]") {
+TEST_CASE("read/write/toFile", "[fat]") {
     fclose(fopen(CONTAINER, "w"));
     BlockDevice blockDev = BlockDevice();
     blockDev.open(CONTAINER);
     FAT fat = FAT(&blockDev);
     
-    int err = fat.write(449, 50000);
-    REQUIRE(err == 0);
-    REQUIRE(fat.read(449) == 50000);
+    SECTION("read/write") {
+        int err = fat.write(449, 50000);
+        REQUIRE(err == 0);
+        REQUIRE(fat.read(449) == 50000);
 
-    err = fat.write(50000, 450);
-    REQUIRE(err == 0);
-    REQUIRE(fat.read(50000) == 450);
+        err = fat.write(50000, 450);
+        REQUIRE(err == 0);
+        REQUIRE(fat.read(50000) == 450);
 
-    err = fat.write(450, 0);
-    REQUIRE(err == 0);
-    REQUIRE(fat.read(450) == 0);
+        err = fat.write(450, 0);
+        REQUIRE(err == 0);
+        REQUIRE(fat.read(450) == 0);
+    }
+
+    SECTION("toFile") {
+        int err = fat.toFile();
+        REQUIRE(err == 0);
+
+        FAT fat2 = FAT(&blockDev);
+        REQUIRE(fat2.read(449) == 50000);
+        REQUIRE(fat2.read(50000) == 450);
+        REQUIRE(fat2.read(450) == 0);
+    }
 }

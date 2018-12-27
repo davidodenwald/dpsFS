@@ -43,12 +43,6 @@ MyFS *MyFS::Instance() {
 MyFS::MyFS() {
     this->logFile = stderr;
     this->openFiles = 0;
-    this->blockDev = new BlockDevice();
-    this->superBlock = new Superblock(this->blockDev);
-    this->dmap = new DMAP(this->blockDev);
-    this->fat = new FAT(this->blockDev);
-    // this->rootDir is initialized in MyFS::fuseInit.
-    this->files = new Files(this->blockDev);
 }
 
 MyFS::~MyFS() {
@@ -230,7 +224,8 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
 
     uint16_t blockOffset = offset / BD_BLOCK_SIZE;
 
-    uint16_t *blocks = (uint16_t *)malloc((blockOffset + blockCount) * sizeof(uint16_t));
+    uint16_t *blocks =
+        (uint16_t *)malloc((blockOffset + blockCount) * sizeof(uint16_t));
     blocks[0] = fileInfo->fh;
     for (int i = 1; i < blockCount + blockOffset; i++) {
         blocks[i] = fat->read(blocks[i - 1]);
@@ -265,7 +260,8 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
     int newBlockCount = blockOffset + blockCount - tmpFile->stat.st_blocks;
 
     if (newBlockCount > 0) {
-        uint16_t *newBlocks = (uint16_t *)malloc(newBlockCount * sizeof(uint16_t));
+        uint16_t *newBlocks =
+            (uint16_t *)malloc(newBlockCount * sizeof(uint16_t));
 
         int err = dmap->getFree(newBlockCount, newBlocks);
         if (err != 0) {
@@ -279,7 +275,8 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
         } else {
             // connect the last block of the existing file with the new blocks
             int lastBlock = 0;
-            for (int tmpBlock = tmpFile->firstBlock; tmpBlock != 0; tmpBlock = fat->read(tmpBlock)) {
+            for (int tmpBlock = tmpFile->firstBlock; tmpBlock != 0;
+                 tmpBlock = fat->read(tmpBlock)) {
                 if (fat->read(tmpBlock) == 0) {
                     lastBlock = tmpBlock;
                 }
@@ -296,11 +293,12 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
         free(newBlocks);
     }
 
-
     uint16_t *blocks = (uint16_t *)malloc(blockCount * sizeof(uint16_t));
     int offsetCount = 0;
     int blockIndex = 0;
-    for (int tmpBlock = tmpFile->firstBlock; tmpBlock != 0 && blockIndex < blockCount; tmpBlock = fat->read(tmpBlock)) {
+    for (int tmpBlock = tmpFile->firstBlock;
+         tmpBlock != 0 && blockIndex < blockCount;
+         tmpBlock = fat->read(tmpBlock)) {
         if (offsetCount < blockOffset) {
             offsetCount++;
         } else {
@@ -331,6 +329,8 @@ int MyFS::fuseFlush(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
     this->openFiles--;
+    this->fat->toFile();
+    this->dmap->toFile();
     RETURN(0);
 }
 
@@ -416,15 +416,24 @@ void *MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOGF("Container file name: %s",
              ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
+        this->blockDev = new BlockDevice();
         blockDev->open(
             ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
+        this->superBlock = new Superblock(this->blockDev);
         sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
         if (this->superBlock->read(s) != 0) {
             LOG("Could not read Superblock");
         }
+        this->dmap = new DMAP(this->blockDev);
+        this->fat = new FAT(this->blockDev);
         this->rootDir = new RootDir(this->blockDev, s->fileCount);
+        this->files = new Files(this->blockDev);
         free(s);
+
+        for (uint16_t block = 449; block != 0; block = this->fat->read(block)) {
+            LOGF("%d\n", block);
+        }
     }
     RETURN(0);
 }

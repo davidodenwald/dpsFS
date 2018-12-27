@@ -40,11 +40,12 @@ class DMAP {
    public:
     DMAP(BlockDevice *blockDev);
     ~DMAP();
-    int create();
+    void create();
     int getFree(uint16_t *pos);
     int getFree(uint16_t num, uint16_t *arr);
     int allocate(uint16_t pos);
     int allocate(uint16_t num, uint16_t *arr);
+    int toFile();
 };
 
 class FAT {
@@ -57,6 +58,7 @@ class FAT {
     ~FAT();
     uint16_t read(uint16_t blockPos);
     int write(uint16_t curAddress, uint16_t nextAddress);
+    int toFile();
 };
 
 struct dpsFile {

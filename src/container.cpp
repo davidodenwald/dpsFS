@@ -52,6 +52,7 @@ int Superblock::write(sbStats *content) {
 DMAP::DMAP(BlockDevice *blockDev) {
     this->blockDev = blockDev;
     this->dmap = (char *)malloc(DMAP_SIZE * BD_BLOCK_SIZE);
+
     for (int i = 0; i < DMAP_SIZE; i++) {
         this->blockDev->read(i + DMAP_INDEX, this->dmap);
         this->dmap += BD_BLOCK_SIZE;
@@ -59,25 +60,14 @@ DMAP::DMAP(BlockDevice *blockDev) {
     this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
 }
 
-DMAP::~DMAP() {
-    for (int i = 0; i < DMAP_SIZE; i++) {
-        this->blockDev->write(i + DMAP_INDEX, this->dmap);
-        this->dmap += BD_BLOCK_SIZE;
-    }
-    this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
-    free(this->dmap);
-}
+DMAP::~DMAP() { free(this->dmap); }
 
-int DMAP::create() {
+/**
+ * Initializes the DMAP sector.
+ */
+void DMAP::create() {
+    memset(this->dmap, 0, DMAP_SIZE * BD_BLOCK_SIZE);
     memset(this->dmap, 'F', FILES_SIZE);
-    for (int i = 0; i < DMAP_SIZE; i++) {
-        if (this->blockDev->write(i + DMAP_INDEX, this->dmap) != 0) {
-            return EIO;
-        }
-        this->dmap += BD_BLOCK_SIZE;
-    }
-    this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
-    return 0;
 }
 
 /**
@@ -86,7 +76,6 @@ int DMAP::create() {
  * @param pos   The variable in which the block is stored.
  *
  * @return      0 if successful.
- *              EIO when read failed.
  *              ENOSPC when no free block is available.
  */
 int DMAP::getFree(uint16_t *pos) {
@@ -109,7 +98,6 @@ int DMAP::getFree(uint16_t *pos) {
  * @param *arr  The array in which the blocks are stored.
  *
  * @return      0 if successful.
- *              EIO when read failed.
  *              ENOSPC when not enough free blocks are available.
  */
 int DMAP::getFree(uint16_t num, uint16_t *arr) {
@@ -138,7 +126,6 @@ int DMAP::getFree(uint16_t num, uint16_t *arr) {
  * @param pos  The block which must be written.
  *
  *  @return     0 when successful.
- *              EIO when read failed.
  */
 int DMAP::allocate(uint16_t pos) {
 #ifdef DEBUG
@@ -155,7 +142,6 @@ int DMAP::allocate(uint16_t pos) {
  * @param *arr  The array of block which must be written.
  *
  *  @return     0 when successful.
- *              EIO when read failed.
  */
 int DMAP::allocate(uint16_t num, uint16_t *arr) {
 #ifdef DEBUG
@@ -167,28 +153,32 @@ int DMAP::allocate(uint16_t num, uint16_t *arr) {
     return 0;
 }
 
+int DMAP::toFile() {
+    for (int i = 0; i < DMAP_SIZE; i++) {
+        if (this->blockDev->write(i + DMAP_INDEX, this->dmap) != 0) {
+            return EIO;
+        }
+        this->dmap += BD_BLOCK_SIZE;
+    }
+    this->dmap -= DMAP_SIZE * BD_BLOCK_SIZE;
+    return 0;
+}
+
 /**
  * Object representing the FAT sector of the container.
  */
 FAT::FAT(BlockDevice *blockDev) {
     this->blockDev = blockDev;
     this->fat = (uint16_t *)malloc(FAT_SIZE * BD_BLOCK_SIZE);
+
     for (int i = 0; i < FAT_SIZE; i++) {
-        int err = this->blockDev->read(i + FAT_INDEX, (char *)this->fat);
-        if (err != 0) {
-            memset(this->fat, 0, BD_BLOCK_SIZE);
-        }
+        this->blockDev->read(i + FAT_INDEX, (char *)this->fat);
         this->fat += BD_BLOCK_SIZE / 2;
     }
     this->fat -= FAT_SIZE * BD_BLOCK_SIZE / 2;
 }
 
 FAT::~FAT() {
-    for (int i = 0; i < FAT_SIZE; i++) {
-        this->blockDev->write(i + FAT_INDEX, (char *)this->fat);
-        this->fat += BD_BLOCK_SIZE / 2;
-    }
-    this->fat -= FAT_SIZE * BD_BLOCK_SIZE / 2;
     free(this->fat);
 }
 
@@ -215,6 +205,17 @@ int FAT::write(uint16_t curAddress, uint16_t nextAddress) {
     fprintf(stderr, "Write address %d -> %d to Fat\n", curAddress, nextAddress);
 #endif
     this->fat[curAddress - FILES_INDEX] = nextAddress;
+    return 0;
+}
+
+int FAT::toFile() {
+    for (int i = 0; i < FAT_SIZE; i++) {
+        if (this->blockDev->write(i + FAT_INDEX, (char *)this->fat) != 0) {
+            return EIO;
+        }
+        this->fat += BD_BLOCK_SIZE / 2;
+    }
+    this->fat -= FAT_SIZE * BD_BLOCK_SIZE / 2;
     return 0;
 }
 
