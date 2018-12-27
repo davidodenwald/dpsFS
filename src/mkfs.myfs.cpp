@@ -82,6 +82,12 @@ int main(int argc, char *argv[]) {
             exit(EFBIG);
         }
 
+        file->stat.st_atime = time(NULL);
+        file->stat.st_ctime = time(NULL);
+        file->stat.st_uid = getgid();
+        file->stat.st_gid = getuid();
+        file->stat.st_mode = S_IFREG | 0444;
+
         // correct file blocksize and blocks
         file->stat.st_blksize = 512;
         if (file->stat.st_size % BD_BLOCK_SIZE == 0) {

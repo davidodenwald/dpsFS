@@ -351,12 +351,6 @@ int RootDir::write(uint16_t num, dpsFile *fileData) {
         this->fileCount++;
     }
 
-    fileData->stat.st_atime = time(NULL);
-    fileData->stat.st_ctime = time(NULL);
-    fileData->stat.st_uid = getgid();
-    fileData->stat.st_gid = getuid();
-    fileData->stat.st_mode = S_IFREG | 0444;
-
     if (this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData) != 0) {
         return EIO;
     }
