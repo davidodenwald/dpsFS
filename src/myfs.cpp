@@ -115,6 +115,11 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     file->stat.st_size = 0;
     file->stat.st_blocks = 0;
     file->stat.st_nlink = 1;
+    file->stat.st_atime = time(NULL);
+    file->stat.st_mtime = time(NULL);
+    file->stat.st_ctime = time(NULL);
+    file->stat.st_uid = getgid();
+    file->stat.st_gid = getuid();
     file->firstBlock = 0;
 
     if (rootDir->write(rootDir->len(), file) != 0) {
@@ -310,6 +315,8 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
     this->files->write(blocks, blockCount, offset % 512, size, buf);
 
     tmpFile->stat.st_size = size + offset;
+    tmpFile->stat.st_mtime = time(NULL);
+    tmpFile->stat.st_ctime = time(NULL);
     this->rootDir->write(fileNum, tmpFile);
 
     free(blocks);
