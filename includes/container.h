@@ -86,6 +86,8 @@ class RootDir {
 class Files {
    private:
     BlockDevice *blockDev;
+    char *buffer;
+    int bufIndex;
 
    public:
     Files(BlockDevice *blockDev);

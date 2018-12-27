@@ -178,9 +178,7 @@ FAT::FAT(BlockDevice *blockDev) {
     this->fat -= FAT_SIZE * BD_BLOCK_SIZE / 2;
 }
 
-FAT::~FAT() {
-    free(this->fat);
-}
+FAT::~FAT() { free(this->fat); }
 
 /**
  * Reads next address from the given address.
@@ -357,13 +355,22 @@ int RootDir::write(uint16_t num, dpsFile *fileData) {
     return 0;
 }
 
-Files::Files(BlockDevice *blockDev) { this->blockDev = blockDev; }
+Files::Files(BlockDevice *blockDev) {
+    this->blockDev = blockDev;
+    this->buffer = (char *)malloc(BD_BLOCK_SIZE);
+    this->bufIndex = 0;
+}
 
-Files::~Files() {}
+Files::~Files() { free(this->buffer); }
 
 int Files::read(uint16_t *blocks, uint16_t num, uint16_t offset, char *buf) {
+    if (num == 1 && blocks[0] == this->bufIndex) {
+        memcpy(buf, this->buffer, BD_BLOCK_SIZE);
+    }
     for (int i = 0; i < num; i++) {
         if (this->blockDev->read(blocks[i], buf) != 0) {
+            memcpy(this->buffer, buf, BD_BLOCK_SIZE);
+            this->bufIndex = blocks[i];
             return EIO;
         }
         buf += BD_BLOCK_SIZE;
@@ -374,29 +381,27 @@ int Files::read(uint16_t *blocks, uint16_t num, uint16_t offset, char *buf) {
 
 int Files::write(uint16_t *blocks, uint16_t num, uint16_t offset, size_t size,
                  const char *buf) {
-    char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
     for (int i = 0; i < num; i++) {
-        memset(tmpBuf, 0, BD_BLOCK_SIZE);
-        this->blockDev->read(blocks[i], tmpBuf);
+        memset(this->buffer, 0, BD_BLOCK_SIZE);
+        this->blockDev->read(blocks[i], this->buffer);
         if (i == 0) {
-            tmpBuf += offset;
+            this->buffer += offset;
         }
 
         int written = 0;
         while ((size_t)written < size && written < BD_BLOCK_SIZE) {
-            *tmpBuf = *buf;
+            *this->buffer = *buf;
             buf++;
-            tmpBuf++;
+            this->buffer++;
             written++;
         }
         if (i == 0) {
-            tmpBuf -= written + offset;
+            this->buffer -= written + offset;
         } else {
-            tmpBuf -= written;
+            this->buffer -= written;
         }
-        this->blockDev->write(blocks[i], tmpBuf);
+        this->blockDev->write(blocks[i], this->buffer);
         size -= BD_BLOCK_SIZE;
     }
-    free(tmpBuf);
     return 0;
 }
