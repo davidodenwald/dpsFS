@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     DMAP dmap = DMAP(&blockDev);
     dmap.create();
     FAT fat = FAT(&blockDev);
-    RootDir rd = RootDir(&blockDev, 0);
+    RootDir rd = RootDir(&blockDev);
 
     for (int i = 2; i < argc; i++) {
         dpsFile *file = (dpsFile *)malloc(BD_BLOCK_SIZE);
@@ -130,18 +130,13 @@ int main(int argc, char *argv[]) {
             free(blocks);
         }
         // RootDir
-        rd.write(rd.len(), file);
+        rd.write(file);
         free(file);
     }
 
-    // Superblock
-    sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
-    s->fileCount = rd.len();
-    sb.write(s);
-    free(s);
-
     dmap.toFile();
     fat.toFile();
+    rd.toFile();
     blockDev.close();
     return 0;
 }

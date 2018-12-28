@@ -220,44 +220,20 @@ int FAT::toFile() {
 /**
  * Object representing the RootDir sector of the container.
  */
-RootDir::RootDir(BlockDevice *blockDev, int fileCount) {
+RootDir::RootDir(BlockDevice *blockDev) {
     this->blockDev = blockDev;
-    this->fileCount = fileCount;
-}
+    this->files = (dpsFile *)malloc(ROOTDIR_SIZE * sizeof(dpsFile));
+    memset(this->files, 0, ROOTDIR_SIZE * sizeof(dpsFile));
+    char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
 
-RootDir::~RootDir() {}
-
-/**
- * Returns the amount of files currently in the filesystem.
- */
-int RootDir::len() { return this->fileCount; }
-
-/**
- * Gets the fileinformation and number of entry by filename.
- * The number can be used for overwriting this entry.
- *
- * @param *name     The name of the file.
- * @param *num      The file number will be stored in here.
- *
- * @return          0 when the file was found.
- *                  ENOENT when the file wasn't found.
- *                  EIO when read failed.
- */
-int RootDir::get(const char *name, dpsFile *fileData, uint16_t *num) {
-#ifdef DEBUG
-    fprintf(stderr, "get fileInfo by name for %s from RootDir\n", name);
-#endif
-    for (int i = 0; i < this->len(); i++) {
-        if (this->read(i, fileData) != 0) {
-            return EIO;
-        }
-        if (strcmp(fileData->name, name) == 0) {
-            *num = i;
-            return 0;
-        }
+    for (int i = 0; i < ROOTDIR_SIZE; i++) {
+        this->blockDev->read(i + ROOTDIR_INDEX, tmpBuf);
+        memcpy(&this->files[i], tmpBuf, sizeof(dpsFile));
     }
-    return ENOENT;
+    free(tmpBuf);
 }
+
+RootDir::~RootDir() { free(files); }
 
 /**
  * Gets the fileinformation by filename.
@@ -267,17 +243,14 @@ int RootDir::get(const char *name, dpsFile *fileData, uint16_t *num) {
  *
  * @return          0 when the file was found.
  *                  ENOENT when the file wasn't found.
- *                  EIO when read failed.
  */
 int RootDir::get(const char *name, dpsFile *fileData) {
 #ifdef DEBUG
     fprintf(stderr, "get fileInfo by name for %s from RootDir\n", name);
 #endif
-    for (int i = 0; i < this->len(); i++) {
-        if (this->read(i, fileData) != 0) {
-            return EIO;
-        }
-        if (strcmp(fileData->name, name) == 0) {
+    for (int i = 0; i < ROOTDIR_SIZE; i++) {
+        if (strcmp(this->files[i].name, name) == 0) {
+            memcpy(fileData, &this->files[i], sizeof(dpsFile));
             return 0;
         }
     }
@@ -321,36 +294,62 @@ int RootDir::read(uint16_t num, dpsFile *fileData) {
     if (num > NUM_DIR_ENTRIES || num < 0) {
         return EFAULT;
     }
-    if (this->blockDev->read(ROOTDIR_INDEX + num, (char *)fileData) != 0) {
-        return EIO;
-    }
+    memcpy(fileData, &files[num], sizeof(dpsFile));
     return 0;
 }
 
 /**
  * Writes file information to the RootDir.
  *
- * @param num       The number under which the file is stored (0..64).
  * @param *fileData The file information which must be stored.
  *
- * @return          EFAULT when num was bigger than NUM_DIR_ENTRIES or negativ.
- *                  EIO when write failed.
+ * @return          EFAULT when files in the Filesystem exceed NUM_DIR_ENTRIES.
  *                  0 otherwise.
  */
-int RootDir::write(uint16_t num, dpsFile *fileData) {
+int RootDir::write(dpsFile *fileData) {
 #ifdef DEBUG
     fprintf(stderr, "write block %d to RoodDir\n", num);
 #endif
-    if (num > NUM_DIR_ENTRIES || num < 0) {
-        return EFAULT;
+    // overwrite file if it exists
+    for (int i = 0; i < ROOTDIR_SIZE; i++) {
+        if (strcmp(this->files[i].name, fileData->name) == 0) {
+            memcpy(&this->files[i], fileData, sizeof(dpsFile));
+            return 0;
+        }
     }
 
-    if (this->exists(fileData->name) != 0) {
-        this->fileCount++;
+    // write to empty slot
+    for (int i = 0; i < ROOTDIR_SIZE; i++) {
+        if (this->files[i].name[0] == 0) {
+            memcpy(&this->files[i], fileData, sizeof(dpsFile));
+            return 0;
+        }
     }
+    return EFAULT;
+}
+/**
+ * Deletes a file.
+ *
+ * * @return        ENOENT when the file doesn't exist.
+ *                  0 when successful.
+ */
+int RootDir::del(const char *name) {
+    for (int i = 0; i < ROOTDIR_SIZE; i++) {
+        if (strcmp(this->files[i].name, name) == 0) {
+            memset(&this->files[i], 0, sizeof(dpsFile));
+            return 0;
+        }
+    }
+    return ENOENT;
+}
 
-    if (this->blockDev->write(ROOTDIR_INDEX + num, (char *)fileData) != 0) {
-        return EIO;
+int RootDir::toFile() {
+    char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
+    for (int i = 0; i < ROOTDIR_SIZE; i++) {
+        memcpy(tmpBuf, &this->files[i], sizeof(dpsFile));
+        if (this->blockDev->write(i + ROOTDIR_INDEX, tmpBuf) != 0) {
+            return EIO;
+        }
     }
     return 0;
 }

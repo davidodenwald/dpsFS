@@ -122,15 +122,10 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     file->stat.st_gid = getuid();
     file->firstBlock = 0;
 
-    if (rootDir->write(rootDir->len(), file) != 0) {
+    if (rootDir->write(file) != 0) {
         free(file);
         RETURN(-EIO);
     }
-
-    sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
-    s->fileCount = this->rootDir->len();
-    this->superBlock->write(s);
-    free(s);
 
     free(file);
     RETURN(0);
@@ -251,9 +246,8 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
     LOGM();
     LOGF("Path: %s | Size: %ld | Offset: %ld", path, size, offset);
 
-    uint16_t fileNum = 0;
     dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
-    rootDir->get(basename(strdup(path)), tmpFile, &fileNum);
+    rootDir->get(basename(strdup(path)), tmpFile);
 
     uint16_t blockCount;
     if (size % BD_BLOCK_SIZE == 0) {
@@ -293,8 +287,6 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
             fat->write(newBlocks[i - 1], newBlocks[i]);
         }
         fat->write(newBlocks[i - 1], 0);
-
-        tmpFile->stat.st_blocks += newBlockCount;
         free(newBlocks);
     }
 
@@ -315,9 +307,10 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
     this->files->write(blocks, blockCount, offset % 512, size, buf);
 
     tmpFile->stat.st_size = size + offset;
+    tmpFile->stat.st_blocks = blockOffset + blockCount;
     tmpFile->stat.st_mtime = time(NULL);
     tmpFile->stat.st_ctime = time(NULL);
-    this->rootDir->write(fileNum, tmpFile);
+    this->rootDir->write(tmpFile);
 
     free(blocks);
     RETURN((int)size);
@@ -338,6 +331,7 @@ int MyFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     this->openFiles--;
     this->fat->toFile();
     this->dmap->toFile();
+    this->rootDir->toFile();
     RETURN(0);
 }
 
@@ -369,9 +363,11 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     if (strcmp(path, "/") == 0) {
         dpsFile *tmpFile = (dpsFile *)malloc(BD_BLOCK_SIZE);
-        for (int i = 0; i < rootDir->len(); i++) {
+        for (int i = 0; i < ROOTDIR_SIZE; i++) {
             rootDir->read(i, tmpFile);
-            filler(buf, tmpFile->name, NULL, 0);
+            if (tmpFile->name[0] != 0) {
+                filler(buf, tmpFile->name, NULL, 0);
+            }
         }
         free(tmpFile);
     }
@@ -428,15 +424,10 @@ void *MyFS::fuseInit(struct fuse_conn_info *conn) {
             ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
         this->superBlock = new Superblock(this->blockDev);
-        sbStats *s = (sbStats *)malloc(BD_BLOCK_SIZE);
-        if (this->superBlock->read(s) != 0) {
-            LOG("Could not read Superblock");
-        }
         this->dmap = new DMAP(this->blockDev);
         this->fat = new FAT(this->blockDev);
-        this->rootDir = new RootDir(this->blockDev, s->fileCount);
+        this->rootDir = new RootDir(this->blockDev);
         this->files = new Files(this->blockDev);
-        free(s);
 
         for (uint16_t block = 449; block != 0; block = this->fat->read(block)) {
             LOGF("%d\n", block);

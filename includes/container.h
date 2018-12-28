@@ -70,17 +70,17 @@ struct dpsFile {
 class RootDir {
    private:
     BlockDevice *blockDev;
-    int fileCount;
+    dpsFile *files;
 
    public:
-    RootDir(BlockDevice *blockDev, int fileCount);
+    RootDir(BlockDevice *blockDev);
     ~RootDir();
-    int len();
     int get(const char *name, dpsFile *fileData);
-    int get(const char *name, dpsFile *fileData, uint16_t *num);
     int exists(const char *name);
     int read(uint16_t num, dpsFile *fileData);
-    int write(uint16_t num, dpsFile *fileData);
+    int write(dpsFile *fileData);
+    int del(const char *name);
+    int toFile();
 };
 
 class Files {
