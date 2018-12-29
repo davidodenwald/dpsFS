@@ -43,6 +43,7 @@ class DMAP {
     void create();
     int getFree(uint16_t *pos);
     int getFree(uint16_t num, uint16_t *arr);
+    int setFree(uint16_t pos);
     int allocate(uint16_t pos);
     int allocate(uint16_t num, uint16_t *arr);
     int toFile();

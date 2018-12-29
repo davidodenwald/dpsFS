@@ -121,9 +121,19 @@ int DMAP::getFree(uint16_t num, uint16_t *arr) {
 }
 
 /**
+ * Sets a given Block to "free".
+ * 
+ *  @param num   the block that is to be set to free.
+ */
+int DMAP::setFree(uint16_t pos) {
+    this->dmap[pos - FILES_INDEX] = 'F';
+    return 0;
+}
+
+/**
  * Marks the given block as allocated.
  *
- * @param pos  The block which must be written.
+ * @param pos   The block which must be written.
  *
  *  @return     0 when successful.
  */
