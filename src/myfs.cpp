@@ -138,9 +138,16 @@ int MyFS::fuseMkdir(const char *path, mode_t mode) {
 
 int MyFS::fuseUnlink(const char *path) {
     LOGM();
+    dpsFile *file = (dpsFile *)malloc(BD_BLOCK_SIZE);
+    this->rootDir->get(basename(strdup(path)), file);
 
-    // TODO: Implement this!
+    this->dmap->setFree(file->firstBlock);
+    for (int tmpBlock = file->firstBlock; tmpBlock != 0; tmpBlock = fat->read(tmpBlock)) {
+        this->dmap->setFree(tmpBlock);
+    }
 
+    this->rootDir->del(file->name);
+    free(file);
     RETURN(0);
 }
 
