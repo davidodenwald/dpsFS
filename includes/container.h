@@ -17,10 +17,6 @@
 #define FILES_SIZE 65087
 #define FILES_INDEX 449
 
-struct sbStats {
-    uint16_t fileCount;
-};
-
 class Superblock {
    private:
     BlockDevice *blockDev;
@@ -28,8 +24,6 @@ class Superblock {
    public:
     Superblock(BlockDevice *blockDev);
     ~Superblock();
-    int read(sbStats *content);
-    int write(sbStats *content);
 };
 
 class DMAP {
@@ -43,9 +37,9 @@ class DMAP {
     void create();
     int getFree(uint16_t *pos);
     int getFree(uint16_t num, uint16_t *arr);
-    int setFree(uint16_t pos);
-    int allocate(uint16_t pos);
-    int allocate(uint16_t num, uint16_t *arr);
+    void setFree(uint16_t pos);
+    void allocate(uint16_t pos);
+    void allocate(uint16_t num, uint16_t *arr);
     int toFile();
 };
 
@@ -58,7 +52,7 @@ class FAT {
     FAT(BlockDevice *blockDev);
     ~FAT();
     uint16_t read(uint16_t blockPos);
-    int write(uint16_t curAddress, uint16_t nextAddress);
+    void write(uint16_t curAddress, uint16_t nextAddress);
     int toFile();
 };
 

@@ -48,7 +48,6 @@ MyFS::MyFS() {
 MyFS::~MyFS() {
     this->blockDev->close();
     delete this->blockDev;
-    delete this->superBlock;
     delete this->dmap;
     delete this->fat;
     delete this->rootDir;
@@ -430,7 +429,6 @@ void *MyFS::fuseInit(struct fuse_conn_info *conn) {
         blockDev->open(
             ((MyFsInfo *)fuse_get_context()->private_data)->contFile);
 
-        this->superBlock = new Superblock(this->blockDev);
         this->dmap = new DMAP(this->blockDev);
         this->fat = new FAT(this->blockDev);
         this->rootDir = new RootDir(this->blockDev);

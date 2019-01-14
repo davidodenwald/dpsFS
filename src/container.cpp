@@ -7,44 +7,12 @@
 #include "container.h"
 #include "myfs-structs.h"
 
-// #define DEBUG 1
-
 /**
  * Object representing the Superblock sector of the container.
  */
 Superblock::Superblock(BlockDevice *blockDev) { this->blockDev = blockDev; }
 
 Superblock::~Superblock() {}
-
-/**
- * Reads the sbStats struct from the superblocck.
- *
- * @param *content  the struct in which the sbStats will be saved.
- */
-int Superblock::read(sbStats *content) {
-#ifdef DEBUG
-    fprintf(stderr, "Reading SuperBlock\n");
-#endif
-    if (this->blockDev->read(0, (char *)content) != 0) {
-        return EIO;
-    }
-    return 0;
-}
-
-/**
- * Writes the sbStats struct to the superblocck.
- *
- * @param *content  the sbStats struct which should be written.
- */
-int Superblock::write(sbStats *content) {
-#ifdef DEBUG
-    fprintf(stderr, "Writing SuperBlock\n");
-#endif
-    if (this->blockDev->write(0, (char *)content) != 0) {
-        return EIO;
-    }
-    return 0;
-}
 
 /**
  * Object representing the DMAP sector of the container.
@@ -79,9 +47,6 @@ void DMAP::create() {
  *              ENOSPC when no free block is available.
  */
 int DMAP::getFree(uint16_t *pos) {
-#ifdef DEBUG
-    fprintf(stderr, "Get Free block from DMAP\n");
-#endif
     for (int i = 0; i < FILES_SIZE; i++) {
         if (this->dmap[i] == 'F') {
             *pos = i + FILES_INDEX;
@@ -101,48 +66,35 @@ int DMAP::getFree(uint16_t *pos) {
  *              ENOSPC when not enough free blocks are available.
  */
 int DMAP::getFree(uint16_t num, uint16_t *arr) {
-#ifdef DEBUG
-    fprintf(stderr, "Get Free %d blocks from DMAP\n", num);
-#endif
     uint16_t found = 0;
     for (int i = 0; i < FILES_SIZE; i++) {
-        if (found == num) {
-            return 0;
-        }
         if (this->dmap[i] == 'F') {
             arr[found] = i + FILES_INDEX;
             found++;
         }
-    }
-    if (found == num) {
-        return 0;
+        if (found == num) {
+            return 0;
+        }
     }
     return ENOSPC;
 }
 
 /**
  * Sets a given Block to "free".
- * 
- *  @param num   the block that is to be set to free.
+ *
+ *  @param pos   the block that is to be set to free.
  */
-int DMAP::setFree(uint16_t pos) {
+void DMAP::setFree(uint16_t pos) {
     this->dmap[pos - FILES_INDEX] = 'F';
-    return 0;
 }
 
 /**
  * Marks the given block as allocated.
  *
  * @param pos   The block which must be written.
- *
- *  @return     0 when successful.
  */
-int DMAP::allocate(uint16_t pos) {
-#ifdef DEBUG
-    fprintf(stderr, "Allocate block %d in DMAP\n", pos);
-#endif
+void DMAP::allocate(uint16_t pos) {
     this->dmap[pos - FILES_INDEX] = 'A';
-    return 0;
 }
 
 /**
@@ -150,19 +102,19 @@ int DMAP::allocate(uint16_t pos) {
  *
  * @param num   The number of blocks that must be written.
  * @param *arr  The array of block which must be written.
- *
- *  @return     0 when successful.
  */
-int DMAP::allocate(uint16_t num, uint16_t *arr) {
-#ifdef DEBUG
-    fprintf(stderr, "Allocate %d blocks in DMAP\n", num);
-#endif
+void DMAP::allocate(uint16_t num, uint16_t *arr) {
     for (uint16_t i = 0; i < num; i++) {
         this->dmap[arr[i] - FILES_INDEX] = 'A';
     }
-    return 0;
 }
 
+/**
+ * Writes the DMAP back to the container file.
+ *
+ * @return  0 when successful
+ *          EIO when write failed
+ */
 int DMAP::toFile() {
     for (int i = 0; i < DMAP_SIZE; i++) {
         if (this->blockDev->write(i + DMAP_INDEX, this->dmap) != 0) {
@@ -196,26 +148,22 @@ FAT::~FAT() { free(this->fat); }
  * @return     the next address.
  */
 uint16_t FAT::read(uint16_t curAddress) {
-#ifdef DEBUG
-    fprintf(stderr, "Read address %d from Fat\n", curAddress);
-#endif
     return this->fat[curAddress - FILES_INDEX];
 }
 
 /**
  * Writes next address to the given address.
- *
- * @return  0 when successful.
- *          EIO when write failed.
  */
-int FAT::write(uint16_t curAddress, uint16_t nextAddress) {
-#ifdef DEBUG
-    fprintf(stderr, "Write address %d -> %d to Fat\n", curAddress, nextAddress);
-#endif
+void FAT::write(uint16_t curAddress, uint16_t nextAddress) {
     this->fat[curAddress - FILES_INDEX] = nextAddress;
-    return 0;
 }
 
+/**
+ * Writes the FAT back to the container file.
+ *
+ * @return  0 when successful
+ *          EIO when write failed
+ */
 int FAT::toFile() {
     for (int i = 0; i < FAT_SIZE; i++) {
         if (this->blockDev->write(i + FAT_INDEX, (char *)this->fat) != 0) {
@@ -255,9 +203,6 @@ RootDir::~RootDir() { free(files); }
  *                  ENOENT when the file wasn't found.
  */
 int RootDir::get(const char *name, dpsFile *fileData) {
-#ifdef DEBUG
-    fprintf(stderr, "get fileInfo by name for %s from RootDir\n", name);
-#endif
     for (int i = 0; i < ROOTDIR_SIZE; i++) {
         if (strcmp(this->files[i].name, name) == 0) {
             memcpy(fileData, &this->files[i], sizeof(dpsFile));
@@ -274,17 +219,12 @@ int RootDir::get(const char *name, dpsFile *fileData) {
  *
  * @return          0 when the file exists.
  *                  ENOENT when the file doesn't exist.
- *                  EIO when read failed.
  */
 int RootDir::exists(const char *name) {
-#ifdef DEBUG
-    fprintf(stderr, "check if file exists: %s\n", name);
-#endif
-    int res;
     dpsFile *tmp = (dpsFile *)malloc(BD_BLOCK_SIZE);
-    res = this->get(name, tmp);
+    int err = this->get(name, tmp);
     free(tmp);
-    return res;
+    return err;
 }
 
 /**
@@ -294,13 +234,9 @@ int RootDir::exists(const char *name) {
  * @param *fileData The file information will be stored in here.
  *
  * @return          EFAULT when num was bigger than NUM_DIR_ENTRIES or negativ.
- *                  EIO when read failed.
  *                  0 otherwise.
  */
 int RootDir::read(uint16_t num, dpsFile *fileData) {
-#ifdef DEBUG
-    fprintf(stderr, "read block %d from RoodDir\n", num);
-#endif
     if (num > NUM_DIR_ENTRIES || num < 0) {
         return EFAULT;
     }
@@ -317,9 +253,6 @@ int RootDir::read(uint16_t num, dpsFile *fileData) {
  *                  0 otherwise.
  */
 int RootDir::write(dpsFile *fileData) {
-#ifdef DEBUG
-    fprintf(stderr, "write block %d to RoodDir\n", num);
-#endif
     // overwrite file if it exists
     for (int i = 0; i < ROOTDIR_SIZE; i++) {
         if (strcmp(this->files[i].name, fileData->name) == 0) {
@@ -340,8 +273,10 @@ int RootDir::write(dpsFile *fileData) {
 /**
  * Deletes a file.
  *
- * * @return        ENOENT when the file doesn't exist.
- *                  0 when successful.
+ * @param *name The filename.
+ *
+ * @return      ENOENT when the file doesn't exist.
+ *              0 when successful.
  */
 int RootDir::del(const char *name) {
     for (int i = 0; i < ROOTDIR_SIZE; i++) {
@@ -353,6 +288,12 @@ int RootDir::del(const char *name) {
     return ENOENT;
 }
 
+/**
+ * Writes the RootDir back to the container file.
+ *
+ * @return  0 when successful
+ *          EIO when write failed
+ */
 int RootDir::toFile() {
     char *tmpBuf = (char *)malloc(BD_BLOCK_SIZE);
     for (int i = 0; i < ROOTDIR_SIZE; i++) {
@@ -364,6 +305,9 @@ int RootDir::toFile() {
     return 0;
 }
 
+/**
+ * Object for reading and writing to the files sector of the container file.
+ */
 Files::Files(BlockDevice *blockDev) {
     this->blockDev = blockDev;
     this->buffer = (char *)malloc(BD_BLOCK_SIZE);
@@ -372,22 +316,45 @@ Files::Files(BlockDevice *blockDev) {
 
 Files::~Files() { free(this->buffer); }
 
+/**
+ * Reads a number of blocks from the container file.
+ *
+ * @param *blocks   the blocknumbers to be read
+ * @param num       the number of blocks to be read
+ * @param offset    the offset at which to read
+ * @param *buf      the buffer into which the bytes are written
+ *
+ * @return          0 when successful
+ *                  EIO when read failed
+ */
 int Files::read(uint16_t *blocks, uint16_t num, uint16_t offset, char *buf) {
     if (num == 1 && blocks[0] == this->bufIndex) {
         memcpy(buf, this->buffer, BD_BLOCK_SIZE);
     }
     for (int i = 0; i < num; i++) {
         if (this->blockDev->read(blocks[i], buf) != 0) {
-            memcpy(this->buffer, buf, BD_BLOCK_SIZE);
-            this->bufIndex = blocks[i];
             return EIO;
         }
+        memcpy(this->buffer, buf, BD_BLOCK_SIZE);
+        this->bufIndex = blocks[i];
         buf += BD_BLOCK_SIZE;
     }
     buf -= BD_BLOCK_SIZE * num - offset;
     return 0;
 }
 
+/**
+ * Writes a number of blocks from the container file.
+ *
+ * @param *blocks   the block numbers to be written
+ * @param num       the number of blocks to be written
+ * @param offset    the offset at which to write
+ * @param size      the number of bytes to be written
+ * @param *buf      the buffer from which the bytes are written
+ *
+ * @return          0 when successful
+ *                  EIO when read or write failed
+ */
 int Files::write(uint16_t *blocks, uint16_t num, uint16_t offset, size_t size,
                  const char *buf) {
     for (int i = 0; i < num; i++) {

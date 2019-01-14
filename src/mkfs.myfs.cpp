@@ -46,7 +46,6 @@ int main(int argc, char *argv[]) {
 
     BlockDevice blockDev = BlockDevice();
     blockDev.open(argv[1]);
-    Superblock sb = Superblock(&blockDev);
     DMAP dmap = DMAP(&blockDev);
     dmap.create();
     FAT fat = FAT(&blockDev);
