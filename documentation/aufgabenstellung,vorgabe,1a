@@ -1,0 +1,30 @@
+Dokumentation Betriebssysteme Labor – Gruppe dosa1013, …, …
+
+1. Aufgabenstellung und Vorgaben
+
+1.1 Aufgabenstellung
+Die uns gestellte Aufgabe in diesem Labor bestand darin, ein Dateisystem zu erstellen. Dieses sollte verwendet werden um einen Dateiträger zu formatieren und soll somit Dateien mit den gewöhnlichen Attributen unterstützen. Diese Attribute umschließen zum Beispiel den Namen, die Größe, die Zugriffsrechte und die verschiedenen Zeitstempel der Dateien.
+Weiterhin sollte es möglich sein, dass ein Datenträger, der mit dem Dateisystem formatiert wurde, in einem Verzeichnisbaum eingetragen wird. Die Einbindung sollte in einem freien, wählbarem und leerem Verzeichnis geschehen, in welchem der Inhalt des Datenträgers anschließend erscheinen sollte.
+
+Anstatt wie bei traditionellen Dateisystemen mit Daten auf einem Datenträger zu arbeiten, verwendeten wir, wie vorgegeben, FUSE. FUSE, was für “File System In User Space” steht, hilft einem dabei, wie der Name schon sagt, Dateisysteme zu schreiben ohne mit Kernel Code zu arbeiten. Es wird besonders für virtuelle Dateisysteme verwendet.
+Während bei traditionellen Dateisystemen bei Anfragen aus dem User Space ein Dateisystem durch das VFS (Virtual Filesystem Switch) gewählt. Dieser Weg geht dann weiter durch das Block-Layer, den I/O-Scheduler und den Gerätetreiber, bevor er schließlich beim Dateiträger endet.
+Anfragen aus dem User Space werden dann über den VFS an FUSE weitergeleitet. FUSE führt anchließend ein Programm aus, gibt diesem die Anfragen weiter und erhält eine Antwort, die es zum anfragenden Programm weiterleitet. Das virtuelle Dateisystem befindet sich also auch im User Space.
+Für die Verwendung von FUSE waren entsprechende Operationen in FUSE zu implementieren. 
+
+Im ersten Aufgabenteil sollte mithilfe eines Kommandos “mkfs.myfs” zusammen mit allen nötigen Strukturen für das Dateisystem erstellt und angelegt werden. 
+Während des Erstellens sollten ausgewählte Dateien einmalig auf den Datenträger kopiert werden. Nachdem der Datenträger auch im Verzeichnisbaum eingebunden wurde, sollen die Datein lesbar sein.
+Hierfür war als erstes das Design des Dateisystems wichtig, in dem alle wichtigen Entscheidungen über den Aufbau und die Einteilung verschiedener Elemente des Dateisystems getroffen wurden. Anschlißend kam das erstellen und befüllen des Datenträgers mit “mkfs.myfs” und letztendlich das einbinden von Datenträgern mit “mount.myfs”. Selbstverständlich waren zusätzlich ausführliche Tests gefragt.
+
+Im zweiten Aufgabenteil soll “mkfs.myfs” einen leeren Datenträger mit fester Größe erstellen. Nach dem einbinden des Datesträgers mit dem Verzeichnisbaum über FUSE, sollen Daten jetzt sowohl lesbar als auch veränderbar und löschbar sein. Zusätzlich sollte man neue Dateien einfügen können.
+Hier mussten hauptsächlich die Operationen zum Anlegen, Ändern, Schreiben und Löschen von Dateien implementiert werden. Außerdem war es eventuell nötig den Aufbau der MyFS-Containerdateien anzupassen.
+
+Im dritten Aufgabenteil war die Dokumentation über das Labor zu schreiben.
+
+
+1.2 Vorgaben
+Das zu erstellende Dateisystem sollte eine Größe von mindestens 30MB freien Platz für Dateien anbieten. Dementsprechend war die Größe aller Verwaltungsstrukturen zu beachten um sicherzugehen, dass genug Platz für Dateien übrig bleibt.
+
+Als Konstanten wurde zuerst die maximal Länge eines Dateinamens “NAME_LENGTH” auf 255 Charaktere festgelegt. 
+Die logische Blockgröße “BLOCK_SIZE” sollte 512 sein, die maximale Anzahl an Verzeichniseinträgen “NUM_DIR_ENTRIES” sollte 64 sein und die Anzahl offener Dateien pro einer MyFS Containerdatei sollte auch 64 sein.
+
+Weiterhin waren über ILIAS
