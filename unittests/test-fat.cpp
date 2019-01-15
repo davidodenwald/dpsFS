@@ -8,18 +8,15 @@ TEST_CASE("read/write/toFile", "[fat]") {
     BlockDevice blockDev = BlockDevice();
     blockDev.open(CONTAINER);
     FAT fat = FAT(&blockDev);
-    
+
     SECTION("read/write") {
-        int err = fat.write(449, 50000);
-        REQUIRE(err == 0);
+        fat.write(449, 50000);
         REQUIRE(fat.read(449) == 50000);
 
-        err = fat.write(50000, 450);
-        REQUIRE(err == 0);
+        fat.write(50000, 450);
         REQUIRE(fat.read(50000) == 450);
 
-        err = fat.write(450, 0);
-        REQUIRE(err == 0);
+        fat.write(450, 0);
         REQUIRE(fat.read(450) == 0);
     }
 

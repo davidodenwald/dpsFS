@@ -46,7 +46,7 @@ mkfs.myfs: obj $(MKFS_MYFS_OBJS)
 # link target mount.myfs
 mount.myfs: obj $(MOUNT_MYFS_OBJS)
 	g++ $(LINKFLAGS) -o $@ $(MOUNT_MYFS_OBJS) $(LIBS)
-	
+
 # clean by removing object dir
 clean:
 	rm -rf $(OBJDIR)
@@ -59,7 +59,7 @@ $(OBJDIR):
 $(OBJDIR)/%.o :  $(SRCDIR)/%.cpp $(HEADERDIR)/*.h
 	g++ -c $(CPPFLAGS) -o $@  $<
 
-# compile c file with header dependency	
+# compile c file with header dependency
 $(OBJDIR)/%.o :  $(SRCDIR)/%.c $(HEADERDIR)/*.h
 	gcc -c $(CFLAGS) -o $@  $<
 
@@ -72,7 +72,6 @@ TSRCDIR = unittests
 UNITTEST_OBJS = $(OBJDIR)/main.o \
 	$(OBJDIR)/blockdevice.o \
 	$(OBJDIR)/test-blockdevice.o \
-	$(OBJDIR)/test-superblock.o \
 	$(OBJDIR)/test-dmap.o \
 	$(OBJDIR)/test-fat.o \
 	$(OBJDIR)/myfs.o \
