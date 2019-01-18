@@ -1,24 +1,32 @@
-Dokumentation Betriebssysteme Labor – Gruppe dosa1013, …, …
+﻿Dokumentation Betriebssysteme Labor – Gruppe dosa1013, depa1016, odda1011
 
 1. Aufgabenstellung und Vorgaben
 
 1.1 Aufgabenstellung
-Die uns gestellte Aufgabe in diesem Labor bestand darin, ein Dateisystem zu erstellen. Dieses sollte verwendet werden um einen Dateiträger zu formatieren und soll somit Dateien mit den gewöhnlichen Attributen unterstützen. Diese Attribute umschließen zum Beispiel den Namen, die Größe, die Zugriffsrechte und die verschiedenen Zeitstempel der Dateien.
-Weiterhin sollte es möglich sein, dass ein Datenträger, der mit dem Dateisystem formatiert wurde, in einem Verzeichnisbaum eingetragen wird. Die Einbindung sollte in einem freien, wählbarem und leerem Verzeichnis geschehen, in welchem der Inhalt des Datenträgers anschließend erscheinen sollte.
+Die uns gestellte Aufgabe in diesem Labor bestand darin, ein Dateisystem zu erstellen. Dieses sollte verwendet werden um einen Dateiträger zu formatieren und somit Dateien mit den gewöhnlichen Attributen zu unterstützen. Diese Attribute umschließen zum Beispiel den Namen, die Größe, die Zugriffsrechte und die verschiedenen Zeitstempel der Dateien.
+Weiterhin sollte ermöglicht werden, dass ein Datenträger, der mit dem Dateisystem formatiert wurde, in einem Verzeichnisbaum eingetragen wird. Die Einbindung sollte in einem freien, wählbarem und leerem Verzeichnis geschehen, in welchem der Inhalt des Datenträgers anschließend erscheinen sollte.
 
-Anstatt wie bei traditionellen Dateisystemen mit Daten auf einem Datenträger zu arbeiten, verwendeten wir, wie vorgegeben, FUSE. FUSE, was für “File System In User Space” steht, hilft einem dabei, wie der Name schon sagt, Dateisysteme zu schreiben ohne mit Kernel Code zu arbeiten. Es wird besonders für virtuelle Dateisysteme verwendet.
-Während bei traditionellen Dateisystemen bei Anfragen aus dem User Space ein Dateisystem durch das VFS (Virtual Filesystem Switch) gewählt. Dieser Weg geht dann weiter durch das Block-Layer, den I/O-Scheduler und den Gerätetreiber, bevor er schließlich beim Dateiträger endet.
-Anfragen aus dem User Space werden dann über den VFS an FUSE weitergeleitet. FUSE führt anchließend ein Programm aus, gibt diesem die Anfragen weiter und erhält eine Antwort, die es zum anfragenden Programm weiterleitet. Das virtuelle Dateisystem befindet sich also auch im User Space.
-Für die Verwendung von FUSE waren entsprechende Operationen in FUSE zu implementieren. 
+Anstatt wie bei traditionellen Dateisystemen mit Daten auf einem Datenträger zu arbeiten, verwendeten wir, wie vorgegeben, FUSE. FUSE, was für “File System In User Space” steht, hilft einem dabei, wie der Name schon sagt, Dateisysteme zu schreiben ohne dabei auf Kernel Ebene arbeiten zu müssen und wird dementsprechend vor allem bei virtuellen Filesystemen verwendet.
 
-Im ersten Aufgabenteil sollte mithilfe eines Kommandos “mkfs.myfs” zusammen mit allen nötigen Strukturen für das Dateisystem erstellt und angelegt werden. 
-Während des Erstellens sollten ausgewählte Dateien einmalig auf den Datenträger kopiert werden. Nachdem der Datenträger auch im Verzeichnisbaum eingebunden wurde, sollen die Datein lesbar sein.
-Hierfür war als erstes das Design des Dateisystems wichtig, in dem alle wichtigen Entscheidungen über den Aufbau und die Einteilung verschiedener Elemente des Dateisystems getroffen wurden. Anschlißend kam das erstellen und befüllen des Datenträgers mit “mkfs.myfs” und letztendlich das einbinden von Datenträgern mit “mount.myfs”. Selbstverständlich waren zusätzlich ausführliche Tests gefragt.
+Während bei traditionellen Dateisystemen mit Kernel-Programmierung Anfragen aus dem User Space den VFS (Virtual Filesystem Switch) durchlaufen müssen, gefolgt vom Block-Layer, dem Input-Output-Layer, dem Gerätetreiber bis schließlich der Datenträger erreicht wird, wird das bei FUSE Filesystemen vermieden.
 
-Im zweiten Aufgabenteil soll “mkfs.myfs” einen leeren Datenträger mit fester Größe erstellen. Nach dem einbinden des Datesträgers mit dem Verzeichnisbaum über FUSE, sollen Daten jetzt sowohl lesbar als auch veränderbar und löschbar sein. Zusätzlich sollte man neue Dateien einfügen können.
-Hier mussten hauptsächlich die Operationen zum Anlegen, Ändern, Schreiben und Löschen von Dateien implementiert werden. Außerdem war es eventuell nötig den Aufbau der MyFS-Containerdateien anzupassen.
+Stattdessen werden Anfragen aus dem User Space vom VFS direkt an FUSE weitergegeben, welches sich um die betroffenen Bereiche kümmert. FUSE führt anschließend ein Programm aus, gibt diesem die Anfragen weiter und erhält eine Antwort, die es zum anfragenden Programm weiterleitet. Wodurch das virtuelle Dateisystem sich praktisch ebenfalls im User Space befindet.
 
-Im dritten Aufgabenteil war die Dokumentation über das Labor zu schreiben.
+
+Um diesen Workaround zu ermöglichen, mussten für die Verwendung von FUSE entsprechende Operationen implementiert werden. 
+
+Im ersten Aufgabenteil war das Ziel mittels dem Kommando “mkfs.myfs” einen Datenträger zu erstellen und alle zugehörigen nötigen Strukturen.
+Beim Erstellen sollten zuvor ausgewählte Files einmalig auf den Datenträger kopiert werden. Nachdem durch FUSE der Datenträger in den Verzeichnisbaum eingebunden wurde, sollte es möglich sein Dateien lesen zu können, aber noch nicht das Bearbeiten oder Löschen.
+Beim oben beschriebenen Aufgabenteil war vor allem das Design des Dateisystems entscheidend was den Aufbau und die Einteilung verschiedener Elemente angeht.
+Anschließend ging es ans Erstellen und Befüllen des Datenträgers durch das Kommando “mkfs.myfs”. Das Einbinden erfolgte über das Kommando “mount.myfs”. Schlussendlich deckten wir mögliche Fehlerquellen mit ausführlichen Testfällen ab.
+
+Das Ziel des zweiten Aufgabenteils war es, ähnlich wie im ersten Aufgabenteil, einen leeren Datenträger mit fester Größer zu erstellen. Nach dem Einbdinden des Datenträgers im Verzeichnisbaum durch FUSE, sollten diesmal Daten jedoch bearbeitet und gelöscht werden können. Hierfür mussten zusätzlich die FUSE-Operationen zum Anlegen, Ändern, Schreiben und Löschen von Dateien implementiert werden.
+
+Außerdem war es eventuell nötig den Aufbau der MyFS-Containerdateien anzupassen(?)
+
+Der dritte und letzte Teil der Laborabgabe ist das Anfertigen der Dokumentation, über den von uns verfassten Code.
+
+
 
 
 1.2 Vorgaben
