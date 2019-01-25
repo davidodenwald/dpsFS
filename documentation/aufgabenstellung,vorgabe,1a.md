@@ -1,4 +1,4 @@
-Dokumentation Betriebssysteme Labor – Gruppe dosa1013, depa1016, odda1011
+﻿Dokumentation Betriebssysteme Labor – Gruppe dosa1013, depa1016, odda1011
 
 1. Aufgabenstellung und Vorgaben
 
@@ -22,7 +22,6 @@ Anschließend ging es ans Erstellen und Befüllen des Datenträgers durch das Ko
 
 Das Ziel des zweiten Aufgabenteils war es, ähnlich wie im ersten Aufgabenteil, einen leeren Datenträger mit fester Größer zu erstellen. Nach dem Einbinden des Datenträgers im Verzeichnisbaum durch FUSE, soll diesmal Daten jedoch bearbeitet und gelöscht werden können. Hierfür mussten zusätzlich die FUSE-Operationen zum Anlegen, Ändern, Schreiben und Löschen von Dateien implementiert werden.
 
-Außerdem war es eventuell nötig den Aufbau der MyFS-Containerdateien anzupassen(?)
 
 Der dritte und letzte Teil der Laborabgabe ist das Anfertigen der Dokumentation, über den von uns verfassten Code.
 
@@ -63,12 +62,40 @@ Enthält das Rootverzeichnis mit Einträgen für die Dateinamen, Dateigrößen, 
 Block 449-65.535
 Datenblöcke der Dateien. Abhängig von der Größe der Datei werden mehrere Blöcke verwendet.
 
+
+
+
+
+
+
+
+
+
+
+
 2.2 Container Erstellung und Befüllung
 
 Die Containerdatei wird mit einem Kommandos erstellt mit folgendem Aufbau: "./mkfs.myfs container.bin file1.txt file2.txt". Die einzelnen Dateien zum Befüllen werden dem Kommando beigefügt.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+2.3 Mounten und Lesen
+
+Das Mounten des Dateisystems erfolgt durch ein Kommando mit folgendem Aufbau: "./mount.myfs container.bin log.txt <mount-dir> -s"
+Dabei ist darauf zu achten, dass absolute Pfade für Containerdatei, Logdatei und Zielordner, der zu mountenden Containerdatei, angegeben werden, "-s" steht für Single-Threaded Mode.
+Im Template wurde uns die Datei "mount.myfs.c" mitgegeben die sicherstellt, 
 
 
 
