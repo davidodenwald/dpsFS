@@ -1,0 +1,76 @@
+Dokumentation Betriebssysteme Labor – Gruppe dosa1013, …, …
+
+1. Aufgabenstellung und Vorgaben
+
+1.1 Aufgabenstellung
+Die uns gestellte Aufgabe in diesem Labor bestand darin, ein Dateisystem zu erstellen. Dieses sollte verwendet werden um einen Dateiträger zu formatieren und soll somit Dateien mit den gewöhnlichen Attributen unterstützen. Diese Attribute umschließen zum Beispiel den Namen, die Größe, die Zugriffsrechte und die verschiedenen Zeitstempel der Dateien.
+Weiterhin sollte es möglich sein, dass ein Datenträger, der mit dem Dateisystem formatiert wurde, in einem Verzeichnisbaum eingetragen wird. Die Einbindung sollte in einem freien, wählbarem und leerem Verzeichnis geschehen, in welchem der Inhalt des Datenträgers anschließend erscheinen sollte.
+
+Anstatt wie bei traditionellen Dateisystemen mit Daten auf einem Datenträger zu arbeiten, verwendeten wir, wie vorgegeben, FUSE. FUSE, was für “File System In User Space” steht, hilft einem dabei, wie der Name schon sagt, Dateisysteme zu schreiben ohne mit Kernel Code zu arbeiten. Es wird besonders für virtuelle Dateisysteme verwendet.
+Während bei traditionellen Dateisystemen bei Anfragen aus dem User Space ein Dateisystem durch das VFS (Virtual Filesystem Switch) gewählt. Dieser Weg geht dann weiter durch das Block-Layer, den I/O-Scheduler und den Gerätetreiber, bevor er schließlich beim Dateiträger endet.
+Anfragen aus dem User Space werden dann über den VFS an FUSE weitergeleitet. FUSE führt anchließend ein Programm aus, gibt diesem die Anfragen weiter und erhält eine Antwort, die es zum anfragenden Programm weiterleitet. Das virtuelle Dateisystem befindet sich also auch im User Space.
+Für die Verwendung von FUSE waren entsprechende Operationen in FUSE zu implementieren. 
+
+Im ersten Aufgabenteil sollte mithilfe eines Kommandos “mkfs.myfs” zusammen mit allen nötigen Strukturen für das Dateisystem erstellt und angelegt werden. 
+Während des Erstellens sollten ausgewählte Dateien einmalig auf den Datenträger kopiert werden. Nachdem der Datenträger auch im Verzeichnisbaum eingebunden wurde, sollen die Datein lesbar sein.
+Hierfür war als erstes das Design des Dateisystems wichtig, in dem alle wichtigen Entscheidungen über den Aufbau und die Einteilung verschiedener Elemente des Dateisystems getroffen wurden. Anschlißend kam das erstellen und befüllen des Datenträgers mit “mkfs.myfs” und letztendlich das einbinden von Datenträgern mit “mount.myfs”. Selbstverständlich waren zusätzlich ausführliche Tests gefragt.
+
+Im zweiten Aufgabenteil soll “mkfs.myfs” einen leeren Datenträger mit fester Größe erstellen. Nach dem einbinden des Datesträgers mit dem Verzeichnisbaum über FUSE, sollen Daten jetzt sowohl lesbar als auch veränderbar und löschbar sein. Zusätzlich sollte man neue Dateien einfügen können.
+Hier mussten hauptsächlich die Operationen zum Anlegen, Ändern, Schreiben und Löschen von Dateien implementiert werden. Außerdem war es eventuell nötig den Aufbau der MyFS-Containerdateien anzupassen.
+
+Im dritten Aufgabenteil war die Dokumentation über das Labor zu schreiben.
+
+
+1.2 Vorgaben
+Das zu erstellende Dateisystem sollte eine Größe von mindestens 30 MB freien Platz für Dateien anbieten. Dementsprechend war die Größe aller Verwaltungsstrukturen zu beachten um sicherzugehen, dass genug Platz für Dateien übrig bleibt.
+
+Als Konstanten wurde zuerst die maximal Länge eines Dateinamens “NAME_LENGTH” auf 255 Charaktere festgelegt. 
+Die logische Blockgröße “BLOCK_SIZE” sollte 512 sein, die maximale Anzahl an Verzeichniseinträgen “NUM_DIR_ENTRIES” sollte 64 sein und die Anzahl offener Dateien pro einer MyFS Containerdatei sollte auch 64 sein.
+
+Weiterhin waren bereits einige, nicht zu modifizierende, Dateien und Methoden bereitgestellt, zum Beispiel “mount.myfs.c”.
+Ein Makefile wurde auch über ILIAS bereitsgestellt.
+
+Es war gefordert, dass alle Zugriffe auf die Containerdatei nur über die Klasse “BlockDevice” gehen. Diese war bereits vorhanden und stellte benötigte Operationen zur Verfügung.
+
+Unit Tests waren gefordert und sollten gründlich und sorgfältig zum Testen verwendet werden.
+
+1.3 Aufbau
+Unser FUSE-Dateisystem bekam den Namen dpsFS, kurz für die Anfangsbuchstaben der Mitglieder der Gruppe.
+Die Containerdateien des Dateisystems sollen bestehen aus Superblock, DMAP, FAT, Root-Verzeichnis und Daten bestehen.
+
+Da das entstehende Dateisystem gesamt mindestens 30 MB freien Platz für Datein haben sollte, entschieden wir uns dafür gesamt 32 MB Speicher zu verwenden. Dies entspricht 33.554.432 Byte.
+Somit war mehr als genug Platz für Dateien vorhanden und es kommt bei Aufteilungen immer zu leicht verwendbaren Zahlen.
+
+32MB * 1024 * 1024 = 33.554.432 Byte
+
+
+Der Superblock sollte Informationen zum File-System, wie etwa die Größe oder die Positionen der Einträge enthalten. 
+In unserem Dateisystem haben wir uns dafür entschieden, im Superblock nur eine Struktur “sbStats” zu haben. Hier sind die Anzahl der Dateien gespeichert und es werden dafür 2 Byte beansprucht. Hierfür wird also nur ein Block benötigt.
+
+
+Die DMAP dient als Verzeichnis freier Datenblöcke. In unserer DMAP für jeden Block ein Character bereit. Hierbei steht F (Free) für einen freien Block und A (Allocated) für einen belegten Block. Bei 65087 freien Blöcken für Dateien, nach dem Abzug nötiger Blöcke für andere Teile der Containerdatei, und bei einer Blockgröße von 512 Byte folgt, dass 128 Blöcke für die DMAP erfordert sind.
+
+65.087 chars / 512 Byte = 128 Blöcke
+
+Im FAT, oder File Allocation Table, soll die Verbindung zwischen Blöcken dargestellt werden. An der Stelle eines Blocks soll immer die Position des nächsten Blockes der Datei stehen. Wenn der letzte Block erreicht wird, soll eine 0 geschrieben werden. Es wird für die Positionen der Datentyp uint16_t verwendet. Dieser ist 2 Byte groß. Somit werden bei 65.087 Blöcken 130.174 Byte gebraucht. Dies entspricht 256 Blöcken, welche jeweils 256 Addressen enthalten.
+Um einen Block zu finden teilt man die Blocknummer durch 256. Um eine Position innerhalb eines Blockes zu finden rechnet man (Blocknummer % 256) * 2.
+
+(uint16_t = 2 Byte)
+65.087 Blöcke * 2 Byte = 130.174 Byte
+130.174 Byte / 512 Byte = 256 Blöcke
+
+
+Das Root-Verzeichnis dient Dateien im Dateisystem und soll als Einträge Dateinamen, Dateigröße, Benutzer- und Gruppen-ID, Zugriffsberechtigungen, Zeitpunkte und Zeiger auf den ersten Datenblock enthalten.
+Dies bedeutet es werden bei uns pro Datei 256 Byte für den Namen, 144 Byte für die Status-Einträge, und 2 Byte für den Zeiger auf den ersten Datenblock gebraucht. Zusammengenommen entspricht dies 402 Byte. 
+Deshalb haben wir uns entschieden pro Datei 1 Block zu verwenden. Dies entspricht, bei einer Anzahl von maximal 64 Dateien, 64 Blöcken.
+
+256 Byte  + 144 Byte + 2 Byte = 402 Byte
+64 Dateien * 1 Block = 64 Blöcke.
+
+
+Für die Datenblöcke sollten 30MB verfügbar sein. Dank unserer Entscheidung 32 MB zu verwenden, hatten wir insgesamt 33.554.432 Byte zur Verfügung. Dies entspricht 65.536 Blöcken. Zieht man hiervon die andersweitig benötigten Blöcke ab verbleiben 65.087 Blöcke, was etwa 31,78 MB entspricht. Somit ist genug  Platz für Dateien vorhanden.
+
+33.554.432 Byte / 512 Byte = 65.536 Blöcke
+65.536 Blöcke – 1 Block – 128 Blöcke – 256 Blöcke – 64 Blöcke = 65087 Blöcke
+65.087 * 512 Byte = 33.324.544 Byte
+33.324.544 Byte / (1024²) Byte = 31,78 MB
