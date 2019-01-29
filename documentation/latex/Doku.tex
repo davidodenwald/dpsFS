@@ -35,6 +35,7 @@
 \urlstyle{same}  % don't use monospace font for urls
 \usepackage{color}
 \usepackage{fancyvrb}
+\usepackage{framed}
 \newcommand{\VerbBar}{|}
 \newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
 \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
@@ -306,6 +307,7 @@ Um alle Informationen zu einer Datei zu speichern, wird ein eigenes
 Struct verwendet, welches pro Datei im Rootverzeichnis gespeichert wird.
 
 \begin{Shaded}
+  \begin{framed}
 \begin{Highlighting}[]
 \KeywordTok{struct}\NormalTok{ dpsFile \{}
     \DataTypeTok{char}\NormalTok{ name[NAME_LENGTH]; }\CommentTok{// Name der Datei}
@@ -313,6 +315,7 @@ Struct verwendet, welches pro Datei im Rootverzeichnis gespeichert wird.
     \DataTypeTok{uint16_t}\NormalTok{ firstBlock;    }\CommentTok{// Addresse der ersten Datenblocks}
 \NormalTok{\};}
 \end{Highlighting}
+\end{framed}
 \end{Shaded}
 
 \hypertarget{rootdir-methoden}{%
@@ -394,17 +397,19 @@ zurückgegeben. Bei der Abfrage des Rootverzeichnisses selbst wird das
 Stat-Struct mit den Werten:
 
 \begin{Shaded}
+  \begin{framed}
 \begin{Highlighting}[]
 \NormalTok{st_uid = getuid();        }\CommentTok{// UID des aktuellen Nutzers}
 \NormalTok{st_gid = getgid();        }\CommentTok{// GID des aktuellen Nutzers}
-\NormalTok{st_atime = time(NULL);    }\CommentTok{// alle Zeiten auf den aktuellen Zeitstempel}
-\NormalTok{st_mtime = time(NULL);    }\CommentTok{// "}
-\NormalTok{st_ctime = time(NULL);    }\CommentTok{// "}
+\NormalTok{st_atime = time(NULL);    }\CommentTok{// alle Zeiten ...}
+\NormalTok{st_mtime = time(NULL);    }\CommentTok{// auf den ...}
+\NormalTok{st_ctime = time(NULL);    }\CommentTok{// aktuellen Zeitstempel}
 \NormalTok{st_mode = S_IFDIR | }\DecValTok{0555}\NormalTok{; }\CommentTok{// Zugriffsberechtigungen auf 0555}
 \NormalTok{st_nlink = }\DecValTok{2}\NormalTok{;             }\CommentTok{// Anzahl der Links auf 2}
 \NormalTok{st_size = }\DecValTok{4096}\NormalTok{;           }\CommentTok{// Größe in Bytes auf 4096}
 \NormalTok{st_blocks = }\DecValTok{8}\NormalTok{;            }\CommentTok{// Anzahl der 512 Byte Blöcke auf 8}
 \end{Highlighting}
+\end{framed}
 \end{Shaded}
 
 befüllt.
@@ -453,7 +458,6 @@ Setzt einen Block auf ``Free''.
 
 Löscht den Eintrag aus dem Bootverzeichnis.
 
-\newpage
 
 \hypertarget{fuse-methoden-1}{%
 \paragraph{3.1.2 FUSE-Methoden}\label{fuse-methoden-1}}
@@ -466,6 +470,7 @@ Datei wird der gewünschte Name und die Zugriffsberechtigungen übergeben.
 Die Restlichen Filestats werden mit den Werten:
 
 \begin{Shaded}
+  \begin{framed}
 \begin{Highlighting}[]
 \NormalTok{st_blksize = }\DecValTok{512}\NormalTok{;}
 \NormalTok{st_size = }\DecValTok{0}\NormalTok{;}
@@ -477,6 +482,7 @@ Die Restlichen Filestats werden mit den Werten:
 \NormalTok{st_uid = getgid();}
 \NormalTok{st_gid = getuid();}
 \end{Highlighting}
+\end{framed}
 \end{Shaded}
 
 befüllt.
@@ -511,8 +517,6 @@ Dadurch konnte das Testen bereits parallel zum Schreiben des Codes für
 die anderen Aufgabenstellungen erfolgen. Die Testcases sind mit dem
 Testframework ``Catch'' geschrieben.
 
-\newpage
-
 \hypertarget{test-dmap}{%
 \paragraph{4.1.2 Test-DMAP}\label{test-dmap}}
 
@@ -535,14 +539,16 @@ getestet. Dabei werden Linux-Commands ausgeführt und der Exit-Code
 dieser überprüft:
 
 \begin{Shaded}
+\begin{framed}
 \begin{Highlighting}[]
 \OperatorTok{<}\BuiltInTok{command}\OperatorTok{>}
 \KeywordTok{if}\BuiltInTok{ [} \VariableTok{$?} \OtherTok{-eq}\NormalTok{ 0}\BuiltInTok{ ]}\NormalTok{; }\KeywordTok{then}
-\BuiltInTok{echo}\NormalTok{ -e }\StringTok{"command successful"}
+    \BuiltInTok{echo}\NormalTok{ -e }\StringTok{"command successful"}
 \KeywordTok{else}
-\BuiltInTok{echo}\NormalTok{ -e }\StringTok{"command failed"}
+    \BuiltInTok{echo}\NormalTok{ -e }\StringTok{"command failed"}
 \KeywordTok{fi}
 \end{Highlighting}
+\end{framed}
 \end{Shaded}
 
 \texttt{read.sh}
@@ -561,8 +567,6 @@ Datei überschreiben
 
 Dieses Script testet die unlink Methode. Dazu wird eine Datei angelegt
 und gleich wieder gelöscht.
-
-\newpage
 
 \hypertarget{optimierungen}{%
 \subsection{5. Optimierungen}\label{optimierungen}}
