@@ -274,7 +274,7 @@ Erstellt die DMAP, mit allen Bytes auf Free gesetzt.
 
 \texttt{int\ DMAP::getFree(uint16\_t\ *pos)}
 
-Kann verwendet werden um einen leeren Block aus der DMAP zu bekommen.
+Kann verwendet werden, um einen leeren Block aus der DMAP zu bekommen.
 
 \texttt{int\ DMAP::getFree(uint16\_t\ num,\ uint16\_t\ *arr)}
 
@@ -337,7 +337,7 @@ Nummer \texttt{num}.
 \texttt{int\ RootDir::write(dpsFile\ *fileData)}
 
 Schreibt Dateiinformationen in das Rootverzeichnis. Wenn der gleiche
-Namen im Rootverzeichnis schon vorhanden ist, wird dieser überschrieben,
+Name im Rootverzeichnis schon vorhanden ist, wird dieser überschrieben,
 sonst wird ein neuer Eintrag angelegt.
 
 \hypertarget{files-methoden}{%
@@ -355,8 +355,7 @@ Schreibt eine Anzahl von Blöcken in die Containerdatei.
 \subsubsection{2.3 Container Erstellung und
 Befüllung}\label{container-erstellung-und-befuxfcllung}}
 
-Die Containerdatei wird mit einem Kommandos erstellt mit folgendem
-Aufbau: \texttt{mkfs.myfs\ containerfile\ {[}input-file\ ...{]}}. Die
+Die Containerdatei wird mit einem Kommando mit folgendem Aufbau erstellt: \texttt{mkfs.myfs\ containerfile\ {[}input-file\ ...{]}}. Die
 einzelnen Dateien zum Befüllen werden an den Befehl angehängt. Wenn
 keine Dateien angehängt werden, wird eine leere Containerdatei erzeugt.
 
@@ -365,12 +364,12 @@ keine Dateien angehängt werden, wird eine leere Containerdatei erzeugt.
 
 Das Einbinden des Dateisystems erfolgt durch das Kommando
 \texttt{mount.myfs\ container\ logfile\ mountdir\ -s}. Der Parameter
-\texttt{-s} steht für Single-Threaded-Mode, der verwendet werden soll um
+\texttt{-s} steht für Single-Threaded-Mode, der verwendet werden soll, um
 potentielle Fehler zu vermeiden, die durch Multithreading auftreten
 können. Im Template wurde uns das Programm \texttt{mount.myfs}
 übergeben, welches sicherstellt, dass das Kommando die richtige Syntax
-befolgt und benötigten Dateien die Voraussetzungen erfüllen. Sofern der
-Zugriff auf den Container und die Logdatei erfolgreich war und ein
+befolgt und die benötigten Dateien die entsprechenden Voraussetzungen erfüllen. Sofern der
+Zugriff auf den Container und die Logdatei erfolgreich waren und ein
 Mountpoint existiert, kann die Initialisierung erfolgen.
 
 \hypertarget{fuse-methoden}{%
@@ -416,7 +415,7 @@ befüllt.
 
 \texttt{MyFS::fuseOpen}
 
-Öffnet eine Datei zum lesen oder schreiben. Beim Aufruf der Methode wird
+Öffnet eine Datei zum Lesen oder Schreiben. Beim Aufruf der Methode wird
 die Anzahl der offenen Dateien um eins erhöht und das Structfeld
 \texttt{fuse\_file\_info-\textgreater{}fh} wird mit dem Zeiger auf den
 Ersten Datenblock der Datei beschrieben.
@@ -426,12 +425,12 @@ Ersten Datenblock der Datei beschrieben.
 Diese Methode wird immer direkt nach dem erfolgreichen fuseOpen
 aufgerufen. Das übergebene Struct \texttt{fuse\_file\_info} beinhaltet
 den vorher gespeicherten Filehandle. Nun können über die FAT alle
-Blocknummern abgefragt und ausgelesen. Die gelesenen Bytes werden in den
-Puffer \texttt{buf} kopiert und die Anzahl zurückgegeben.
+Blocknummern abgefragt und ausgelesen werden. Die gelesenen Bytes werden in den
+Puffer \texttt{buf} kopiert und die Anzahl wird zurückgegeben.
 
 \texttt{MyFS::fuseRelease}
 
-Wird beim schließen einer Datei aufgerufen. Die Anzahl der offenen
+Wird beim Schließen einer Datei aufgerufen. Die Anzahl der offenen
 Dateien wird um eins reduziert und alle \texttt{toFile} Methoden der
 Container-Objekte werden aufgerufen.
 
@@ -447,7 +446,7 @@ Dateien}\label{erstellen-und-luxf6schen-von-dateien}}
 \paragraph{3.1.1 Eigene Klassen und
 Methoden}\label{eigene-klassen-und-methoden-1}}
 
-Für das löschen von Dateien mussten die Klassen \texttt{DMAP} und
+Für das Löschen von Dateien mussten die Klassen \texttt{DMAP} und
 \texttt{RootDir} um Methoden erweitert werden.
 
 \texttt{void\ DMAP::setFree(uint16\_t\ pos)}
@@ -456,7 +455,7 @@ Setzt einen Block auf ``Free''.
 
 \texttt{int\ RootDir::del(const\ char\ *name)}
 
-Löscht den Eintrag aus dem Bootverzeichnis.
+Löscht den Eintrag aus dem Rootverzeichnis.
 
 
 \hypertarget{fuse-methoden-1}{%
@@ -464,8 +463,8 @@ Löscht den Eintrag aus dem Bootverzeichnis.
 
 \texttt{MyFS::fuseMknod}
 
-Wird nur dann aufgerufen wenn die Methode \texttt{MyFS::fuseGetattr} den
-Fehlercode \texttt{-ENOENT} zurück gibt. Beim erstellen einer neuen
+Wird nur dann aufgerufen, wenn die Methode \texttt{MyFS::fuseGetattr} den
+Fehlercode \texttt{-ENOENT} zurückgibt. Beim Erstellen einer neuen
 Datei wird der gewünschte Name und die Zugriffsberechtigungen übergeben.
 Die Restlichen Filestats werden mit den Werten:
 
@@ -490,8 +489,8 @@ befüllt.
 \texttt{MyFS::fuseWrite}
 
 Schreibt vom \texttt{offset} bis \texttt{offset+size} den Inhalt aus dem
-Puffer \texttt{buf} in eine Datei. Dabei wird zuerst ermittelt ob neue
-Blöcke für den Schreibvorgang nötig sind oder ob die vorhandenen Blöcke
+Puffer \texttt{buf} in eine Datei. Dabei wird zuerst ermittelt, ob neue
+Blöcke für den Schreibvorgang nötig sind, oder ob die vorhandenen Blöcke
 überschrieben werden. Wenn neue Blöcke verwendet werden, werden diese in
 der FAT an die vorhandenen Blöcke angehängt. Nach dem Schreiben werden
 die Filestats \texttt{st\_size} und \texttt{st\_blocks} auf die neue
@@ -502,7 +501,7 @@ keinen Platz im Dateisystem vorhanden ist, wird der Fehlercode
 
 \texttt{MyFS::fuseUnlink}
 
-Entfernt eine Datei indem der Eintrag im Rootverzeichnis gelöscht wird
+Entfernt eine Datei, indem der Eintrag im Rootverzeichnis gelöscht wird
 und die entsprechenden Datenblöcke in der DMAP freigegeben werden.
 
 \hypertarget{testfuxe4lle}{%
@@ -520,14 +519,14 @@ Testframework ``Catch'' geschrieben.
 \hypertarget{test-dmap}{%
 \paragraph{4.1.2 Test-DMAP}\label{test-dmap}}
 
-In diesem Testcase werden die Methoden der DMAP-Klasse getestet. Erst
-die, die einzelne Blöcke zurückgeben und diese allokieren und dann die,
+In diesem Testcase werden die Methoden der DMAP-Klasse getestet. Zunächst
+die Methoden, die einzelne Blöcke zurückgeben und allokieren und dann jene,
 die mehrere Blöcke aus der DMAP zurückgeben und allokieren können.
 
 \hypertarget{test-fat}{%
 \paragraph{4.1.1 Test-FAT}\label{test-fat}}
 
-Diese Tests überprüfen ob alle Lese- und Schreib-Methoden der Fat-Klasse
+Diese Tests überprüfen, ob alle Lese- und Schreib-Methoden der Fat-Klasse
 funktionieren.
 
 \hypertarget{testen-der-fuse-operationen}{%
@@ -535,8 +534,7 @@ funktionieren.
 Operationen}\label{testen-der-fuse-operationen}}
 
 Die Fuse Operationen wurden mit \texttt{Bash}-Scripten ausführlich
-getestet. Dabei werden Linux-Commands ausgeführt und der Exit-Code
-dieser überprüft:
+getestet. Dabei werden Linux-Commands ausgeführt und deren Exit-Code überprüft:
 
 \begin{Shaded}
 \begin{framed}
@@ -571,16 +569,16 @@ und gleich wieder gelöscht.
 \hypertarget{optimierungen}{%
 \subsection{5. Optimierungen}\label{optimierungen}}
 
-Beim ersten programmieren der Container-Klassen haben alle Methoden
+Beim ersten Programmieren der Container-Klassen haben alle Methoden
 immer direkt die Daten aus der Containerdatei gelesen und geschrieben.
-Das hatte zufolge, dass Lese und Schreiboperationen bei großen Dateien
-lange gedauert haben. Um das zu beschleunigen wurden für die Klassen
+Dies hatte zufolge, dass Lese -und Schreiboperationen bei großen Dateien
+lange andauerten. Um dies zu beschleunigen wurden für die Klassen
 \texttt{DMAP}, \texttt{FAT} und \texttt{RootDir} jeweils ein Array
-angelegt, welches im Konstruktor aus der Containerdatei befüllt und
-durch den Aufruf der \texttt{toFile} Methode in die Container
+angelegt, welches im Konstruktor aus der Containerdatei befüllt wird und
+durch den Aufruf der \texttt{toFile} Methode, in die Containerdatei
 zurückgeschrieben wird.
 
-Dadurch konnte die Zeit, die zum Schreiben von 30 MB gebraucht wird um
+Dadurch konnte die Zeit, die zum Schreiben von 30 MB gebraucht wird, um
 das 42-Fache reduziert werden.
 
 \end{document}
