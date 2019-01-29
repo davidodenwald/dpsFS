@@ -17,7 +17,7 @@ Während bei traditionellen Dateisystemen mit Kernel-Programmierung Anfragen aus
 
 Stattdessen werden Anfragen aus dem User Space vom VFS direkt an FUSE weitergegeben, welches sich um die betroffenen Bereiche kümmert. FUSE führt anschließend ein Programm aus, gibt diesem die Anfragen weiter und erhält eine Antwort, die es zum anfragenden Programm weiterleitet. Wodurch das virtuelle Dateisystem sich praktisch ebenfalls im User Space befindet.
 
-Im ersten Aufgabenteil war das Ziel mittels dem Kommando `mkfs.myfs` eine Containerdatei zu erstellen, die alle  nötigen Strukturen enthält.
+Im ersten Aufgabenteil war das Ziel mittels dem Kommando `mkfs.myfs` eine Containerdatei zu erstellen, die alle nötigen Strukturen enthält.
 Beim Erstellen sollen ausgewählte Dateien einmalig in die Containerdatei kopiert werden. Nachdem diese durch FUSE in den Verzeichnisbaum eingebunden wurde, soll es möglich sein Dateien lesen zu können, aber noch nicht das Bearbeiten oder Löschen.
 Beim oben beschriebenen Aufgabenteil war vor allem das Design des Dateisystems entscheidend was den Aufbau und die Einteilung verschiedener Elemente angeht.
 Anschließend ging es ans Erstellen und Befüllen des Datenträgers durch das Kommando `mkfs.myfs`. Das Einbinden erfolgte über das Kommando `mount.myfs`. Schlussendlich deckten wir mögliche Fehlerquellen mit ausführlichen Testfällen ab.
@@ -38,7 +38,7 @@ Als Konstanten wurde festgelegt:
 
 Die Übung soll von 2-4 Studenten durchgeführt werden. 
 
-Zur bearbeitung des Projektes wurde ein Template bereitgestellt, welches folgendes beinhaltet:
+Zur Bearbeitung des Projektes wurde ein Template bereitgestellt, welches folgendes beinhaltet:
 
 - Makefile
 - Testframework "Catch"
@@ -46,7 +46,7 @@ Zur bearbeitung des Projektes wurde ein Template bereitgestellt, welches folgend
 
 ## 2. Read-Only Filesystem
 ### 2.1 Container Datei Aufbau
-Grundbestandteil des Dateisystems ist die Erstellung der Containerdatei und diese anschließend zu befüllen. Die Containerdatei muss mindestens eine Größe von 30 MB besitzen und wird in 512 Byte große Blöcke aufgeteilt. Maximal sollen bis zu 64 Dateien gespeichert werden können. Als Gesamtgröße wählten wir 33.324.544 Bytes (32 MB) welche 65.536 Blöcke entsprechen. Das hat den Vorteil, dass wir über ein `uint16_t` (16 Bit Integer) alle Blöcke addressieren können.
+Grundbestandteil des Dateisystems ist die Erstellung der Containerdatei und diese anschließend zu befüllen. Die Containerdatei muss mindestens eine Größe von 30 MB besitzen und wird in 512 Byte große Blöcke aufgeteilt. Maximal sollen bis zu 64 Dateien gespeichert werden können. Als Gesamtgröße wählten wir 33.324.544 Bytes (32 MB) welche 65.536 Blöcke entsprechen. Das hat den Vorteil, dass wir über ein `uint16_t` (16 Bit Integer) alle Blöcke adressieren können.
 
 Die Blöcke werden wie folgt genutzt:
 
@@ -59,10 +59,10 @@ Die Blöcke werden wie folgt genutzt:
 Enthält den Superblock, welcher nicht benutzt wird.
 
 - **Block 1-128**
-Enthält die DMAP in der abgelegt wird, welche Blöcke frei oder belegt sind. Dabei wird entweder der Character F für free, oder A für allocated an die Stelle des DatenBlocks geschrieben. Um alle 65.536 Blöcke über ein Byte abzubilden, muss dieser Bereich 128 Blöcke groß sein.
+Enthält die DMAP in der abgelegt wird, welche Blöcke frei oder belegt sind. Dabei wird entweder der Charakter F für free, oder A für allocated an die Stelle des Datenblocks geschrieben. Um alle 65.536 Blöcke über ein Byte abzubilden, muss dieser Bereich 128 Blöcke groß sein.
 
 - **Block 129-384**
-Enthält eine File Allocation Table (FAT) in der an der Stelle einer Blocknummer die Nummer des darauf folgenden Blocks abgelegt wird, welche die nächste Blocknummer beinhaltet. Beim letzten Block wird eine 0 geschrieben. Da pro Blocknummer werden 2 byte benötigt werden, muss dieser Bereich 256 Blöcke groß sein.
+Enthält eine File Allocation Table (FAT) in der an der Stelle einer Blocknummer die Nummer des darauf folgenden Blocks abgelegt wird, welche die nächste Blocknummer beinhaltet. Beim letzten Block wird eine 0 geschrieben. Da pro Blocknummer werden 2 Byte benötigt werden, muss dieser Bereich 256 Blöcke groß sein.
 
 - **Block 385-448**
 Enthält das Rootverzeichnis mit Einträgen für jede im Dateisystem gespeicherte Datei. Diese Einträge beinhalten den Dateinamen, die Dateigröße, Benutzer/Gruppen-ID, Zugriffsberechtigungen, Zeitstempel für den letzten Zugriff/Veränderung/Statusänderung und den Zeiger auf den ersten Datenblock.
@@ -103,20 +103,19 @@ Setzt mehrere Blöcke auf Allocated.
 
 Liest die nächste Adresse aus der angegebenen Adresse.
 
-
 `void FAT::write(uint16_t curAddress, uint16_t nextAddress)`
 
 Schreibt die nächste Adresse an die angegebene Adresse.
 
 #### 2.2.3 dpsFile-Struct
 
-Um alle informationen zu einer Datei zu speichern, wird ein eigenes Struct verwendet, welches pro Datei im Rootverzeichnis gespeichert wird.
+Um alle Informationen zu einer Datei zu speichern, wird ein eigenes Struct verwendet, welches pro Datei im Rootverzeichnis gespeichert wird.
 
 ```c
 struct dpsFile {
-    char name[NAME_LENGTH]; // Name der Datei
-    struct stat stat;       // Stat-Struct
-    uint16_t firstBlock;    // Addresse der ersten Datenblocks
+char name[NAME_LENGTH]; // Name der Datei
+struct stat stat;       // Stat-Struct
+uint16_t firstBlock;    // Addresse der ersten Datenblocks
 };
 ```
 
@@ -177,15 +176,15 @@ Wenn die angefragte Datei nicht existiert wird `-ENOENT` zurückgegeben.
 Bei der Abfrage des Rootverzeichnisses selbst wird das Stat-Struct mit den Werten:
 
 ```c
-st_uid    = getuid();       // UID des aktuellen Nutzers
-st_gid    = getgid();       // GID des aktuellen Nutzers
-st_atime  = time(NULL);     // alle Zeiten auf den aktuellen Zeitstempel
-st_mtime  = time(NULL);     // "
-st_ctime  = time(NULL);     // "
-st_mode   = S_IFDIR | 0555; // Zugriffsberechtigungen auf 0555
-st_nlink  = 2;              // Anzahl der Links auf 2
-st_size   = 4096;           // Größe in Bytes auf 4096
-st_blocks = 8;              // Anzahl der 512 Byte Blöcke auf 8
+st_uid = getuid();        // UID des aktuellen Nutzers
+st_gid = getgid();        // GID des aktuellen Nutzers
+st_atime = time(NULL);    // alle Zeiten auf den aktuellen Zeitstempel
+st_mtime = time(NULL);    // "
+st_ctime = time(NULL);    // "
+st_mode = S_IFDIR | 0555; // Zugriffsberechtigungen auf 0555
+st_nlink = 2;             // Anzahl der Links auf 2
+st_size = 4096;           // Größe in Bytes auf 4096
+st_blocks = 8;            // Anzahl der 512 Byte Blöcke auf 8
 ```
 befüllt.
 
@@ -202,7 +201,6 @@ Die gelesenen Bytes werden in den Puffer `buf` kopiert und die Anzahl zurückgeg
 
 Wird beim schließen einer Datei aufgerufen. Die Anzahl der offenen Dateien wird um eins reduziert und alle `toFile` Methoden der Container-Objekte werden aufgerufen.
 
-
 ## 3 Read and Write Filesystem
 ### 3.1 Erstellen und Löschen von Dateien
 
@@ -216,37 +214,35 @@ Setzt einen Block auf "Free".
 
 `int RootDir::del(const char *name)`
 
-Löscht den Eintrag aus dem RootVerzeichnis.
+Löscht den Eintrag aus dem Bootverzeichnis.
 
 #### 3.1.2 FUSE-Methoden
 
 `MyFS::fuseMknod`
 
-Wird nur dann aufgerufen wenn die Methode `MyFS::fuseGetattr` den Fehlercode `-ENOENT` zurückgibt. Beim erstellen einer neuen Datei wird der gewünschte Name und die Zugriffsberechtigungen übergeben. Die Restlichen Filestats werden mit den Werten:
+Wird nur dann aufgerufen wenn die Methode `MyFS::fuseGetattr` den Fehlercode `-ENOENT` zurück gibt. Beim erstellen einer neuen Datei wird der gewünschte Name und die Zugriffsberechtigungen übergeben. Die Restlichen Filestats werden mit den Werten:
 ```c
 st_blksize = 512;
-st_size    = 0;
-st_blocks  = 0;
-st_nlink   = 1;
-st_atime   = time(NULL);
-st_mtime   = time(NULL);
-st_ctime   = time(NULL);
-st_uid     = getgid();
-st_gid     = getuid();
+st_size = 0;
+st_blocks = 0;
+st_nlink = 1;
+st_atime = time(NULL);
+st_mtime = time(NULL);
+st_ctime = time(NULL);
+st_uid = getgid();
+st_gid = getuid();
 ```
 befüllt.
 
-
 `MyFS::fuseWrite`
 
-Schreibt vom `offset` bis `offset+size` den Inhalt aus dem Puffer `buf` in eine Datei. Dabei wird zuerst ermittelt ob neue Blöcke für den schreibvorgang nötig sind oder ob die vorhandenen Blöcke überschrieben werden. Wenn neue Blöcke verwendet werden, werden diese in der FAT an die vorhandenen Blöcke angehängt.
+Schreibt vom `offset` bis `offset+size` den Inhalt aus dem Puffer `buf` in eine Datei. Dabei wird zuerst ermittelt ob neue Blöcke für den Schreibvorgang nötig sind oder ob die vorhandenen Blöcke überschrieben werden. Wenn neue Blöcke verwendet werden, werden diese in der FAT an die vorhandenen Blöcke angehängt.
 Nach dem Schreiben werden die Filestats `st_size` und `st_blocks` auf die neue Größe und `st_mtime` und `st_ctime` auf den aktuellen Timestamp angepasst.
 Sollte der Schreibvorgang nicht möglich sein, weil keinen Platz im Dateisystem vorhanden ist, wird der Fehlercode `-ENOSPC` zurückgegeben.
 
 `MyFS::fuseUnlink`
 
 Entfernt eine Datei indem der Eintrag im Rootverzeichnis gelöscht wird und die entsprechenden Datenblöcke in der DMAP freigegeben werden.
-
 
 ## 4. Testfälle
 ### 4.1 Testen des Containers
@@ -268,22 +264,22 @@ Die Fuse Operationen wurden mit `Bash`-Scripten ausführlich getestet. Dabei wer
 ```bash
 <command>
 if [ $? -eq 0 ]; then
-    echo -e "command successful"
+echo -e "command successful"
 else
-    echo -e "command failed"
+echo -e "command failed"
 fi
 ```
 
 `read.sh`
 
-Das Script erstellt eine Containerdatei und übergibt dabei eine Testdatei. Dann wird die Containerdatei gemountet und die Datei über `diff` mit dem Orginal verglichen. 
+Das Skript erstellt eine Containerdatei und übergibt dabei eine Testdatei. Dann wird die Containerdatei gemountet und die Datei über `diff` mit dem Original verglichen. 
 
 `write.sh`
 
 Mit diesem Script werden verschiedene Schreiboperationen getestet:
 - Anlegen einer leeren Datei
 - Beschreiben der Datei
-- Text andhängen
+- Text anhängen
 - Datei überschreiben
 
 `delete.sh`
@@ -292,7 +288,7 @@ Dieses Script testet die unlink Methode. Dazu wird eine Datei angelegt und gleic
 
 ## 5. Optimierungen
 
-Beim ersten programmieren der Container-Klassen haben alle Methoden immer direkt die Daten aus der Containerdatei gelesen und geschrieben. Das hatte zurfolge, dass Lese und Schreiboperationen bei großen Dateien lange gedauert haben.
-Um das zu beschleunigen wurden für die Klassen `DMAP`, `FAT` und `RootDir` jeweils ein Array angelegt, welches im Konstructor aus der Containerdatei befüllt und durch den Aufruf der `toFile` Methode in die Container zurückgeschrieben wird.
+Beim ersten programmieren der Container-Klassen haben alle Methoden immer direkt die Daten aus der Containerdatei gelesen und geschrieben. Das hatte zufolge, dass Lese und Schreiboperationen bei großen Dateien lange gedauert haben.
+Um das zu beschleunigen wurden für die Klassen `DMAP`, `FAT` und `RootDir` jeweils ein Array angelegt, welches im Konstruktor aus der Containerdatei befüllt und durch den Aufruf der `toFile` Methode in die Container zurückgeschrieben wird.
 
 Dadurch konnte die Zeit, die zum Schreiben von 30 MB gebraucht wird um das 42-Fache reduziert werden.
