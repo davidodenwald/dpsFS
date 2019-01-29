@@ -1,0 +1,582 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage[ngerman]{babel}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{hyperref}
+\hypersetup{
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs}
+% Fix footnotes in tables (requires footnote package)
+\IfFileExists{footnote.sty}{\usepackage{footnote}\makesavenoteenv{longtable}}{}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\title{Dateisystem mit FUSE \\
+  \large Dokumentation Betriebssysteme Labor \\
+  \large Wintersemester 2018/2019}
+\author{dosa1013, depa1016, odda1011}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\newpage
+
+\hypertarget{aufgabenstellung-und-vorgaben}{%
+\subsection{1. Aufgabenstellung und
+Vorgaben}\label{aufgabenstellung-und-vorgaben}}
+
+\hypertarget{aufgabenstellung}{%
+\subsubsection{1.1 Aufgabenstellung}\label{aufgabenstellung}}
+
+Die uns gestellte Aufgabe in diesem Labor bestand darin, ein Dateisystem
+zu erstellen. Dieses soll verwendet werden, um einen Dateiträger zu
+formatieren und somit Dateien mit den gewöhnlichen Attributen zu
+unterstützen. Diese Attribute umschließen zum Beispiel den Namen, die
+Größe, die Zugriffsrechte und die verschiedenen Zeitstempel der Dateien.
+Weiterhin soll ermöglicht werden, dass ein Datenträger, der mit dem
+Dateisystem formatiert wurde, in einem Verzeichnisbaum eingetragen wird.
+Die Einbindung soll dann in einem freien, wählbarem und leerem
+Verzeichnis erfolgen, in welchem der Inhalt des Datenträgers
+anschließend erscheinen soll.
+
+Anstatt wie bei traditionellen Dateisystemen mit Daten auf einem
+Datenträger zu arbeiten, verwendeten wir eine Containerdatei. Außerdem
+schreiben wir das Dateisystem nicht als Kernel Modul, sondern nutzen
+FUSE. FUSE, was für ``File System In User Space'' steht, hilft einem
+dabei, wie der Name schon sagt, Dateisysteme zu schreiben ohne dabei auf
+Kernel Ebene programmieren zu müssen und wird dementsprechend vor allem
+bei virtuellen Dateisystemen verwendet.
+
+Während bei traditionellen Dateisystemen mit Kernel-Programmierung
+Anfragen aus dem User Space den VFS (Virtual Filesystem Switch)
+durchlaufen müssen, gefolgt vom Block-Layer, dem Input-Output-Layer, dem
+Gerätetreiber bis schließlich der Datenträger erreicht wird, wird das
+bei FUSE Dateisystemen vermieden.
+
+Stattdessen werden Anfragen aus dem User Space vom VFS direkt an FUSE
+weitergegeben, welches sich um die betroffenen Bereiche kümmert. FUSE
+führt anschließend ein Programm aus, gibt diesem die Anfragen weiter und
+erhält eine Antwort, die es zum anfragenden Programm weiterleitet.
+Wodurch das virtuelle Dateisystem sich praktisch ebenfalls im User Space
+befindet.
+
+Im ersten Aufgabenteil war das Ziel mittels dem Kommando
+\texttt{mkfs.myfs} eine Containerdatei zu erstellen, die alle nötigen
+Strukturen enthält. Beim Erstellen sollen ausgewählte Dateien einmalig
+in die Containerdatei kopiert werden. Nachdem diese durch FUSE in den
+Verzeichnisbaum eingebunden wurde, soll es möglich sein Dateien lesen zu
+können, aber noch nicht das Bearbeiten oder Löschen. Beim oben
+beschriebenen Aufgabenteil war vor allem das Design des Dateisystems
+entscheidend was den Aufbau und die Einteilung verschiedener Elemente
+angeht. Anschließend ging es ans Erstellen und Befüllen des Datenträgers
+durch das Kommando \texttt{mkfs.myfs}. Das Einbinden erfolgte über das
+Kommando \texttt{mount.myfs}. Schlussendlich deckten wir mögliche
+Fehlerquellen mit ausführlichen Testfällen ab.
+
+Das Ziel des zweiten Aufgabenteils war es, nach dem Einbinden des
+Datenträgers, Dateien bearbeiten und löschen zu können. Hierfür mussten
+die FUSE-Operationen zum Anlegen, Ändern, Schreiben und Löschen von
+Dateien implementiert werden.
+
+Der dritte und letzte Teil der Laborabgabe ist das Anfertigen der
+Dokumentation, über das von uns verfasste Programm.
+
+\hypertarget{vorgaben}{%
+\subsubsection{1.2 Vorgaben}\label{vorgaben}}
+
+Das zu erstellende Dateisystem soll eine Größe von mindestens 30 MB
+Platz für Dateien anbieten. Dementsprechend war die Größe aller
+Verwaltungsstrukturen zu beachten um sicherzugehen, dass genug Platz für
+Dateien übrig bleibt. Alle Dateien, die sich im Dateisystem befinden
+sollen sich im Rootverzeichnis befinden und es soll keine weiteren
+Verzeichnisse geben.
+
+Als Konstanten wurde festgelegt: - Die maximal Länge eines Dateinamens
+\texttt{NAME\_LENGTH} auf 255 Charaktere. - Die logische Blockgröße
+\texttt{BLOCK\_SIZE} mit 512 Byte. - Die maximale Anzahl an
+Verzeichniseinträgen \texttt{NUM\_DIR\_ENTRIES} mit 64. - Die Anzahl der
+maximal geöffneten Dateien \texttt{NUM\_OPEN\_FILES} mit ebenfalls 64.
+
+Die Übung soll von 2-4 Studenten durchgeführt werden.
+
+Zur Bearbeitung des Projektes wurde ein Template bereitgestellt, welches
+folgendes beinhaltet:
+
+\begin{itemize}
+\tightlist
+\item
+  Makefile
+\item
+  Testframework ``Catch''
+\item
+  diverse \texttt{.cpp} und \texttt{.h} Dateien, die nützliche
+  Funktionalitäten und Vorlagen enthalten.
+\end{itemize}
+
+\hypertarget{read-only-filesystem}{%
+\subsection{2. Read-Only Filesystem}\label{read-only-filesystem}}
+
+\hypertarget{container-datei-aufbau}{%
+\subsubsection{2.1 Container Datei
+Aufbau}\label{container-datei-aufbau}}
+
+Grundbestandteil des Dateisystems ist die Erstellung der Containerdatei
+und diese anschließend zu befüllen. Die Containerdatei muss mindestens
+eine Größe von 30 MB besitzen und wird in 512 Byte große Blöcke
+aufgeteilt. Maximal sollen bis zu 64 Dateien gespeichert werden können.
+Als Gesamtgröße wählten wir 33.324.544 Bytes (32 MB) welche 65.536
+Blöcke entsprechen. Das hat den Vorteil, dass wir über ein
+\texttt{uint16\_t} (16 Bit Integer) alle Blöcke adressieren können.
+
+Die Blöcke werden wie folgt genutzt:
+
+\begin{longtable}[]{@{}llllll@{}}
+\toprule
+Name & Superblock & DMAP & FAT & Rootverzeichnis &
+Dateien\tabularnewline
+\midrule
+\endhead
+Größe & 1 & 128 & 256 & 64 & 65087\tabularnewline
+Blockindex & 0 & 1-128 & 129-384 & 385-448 & 449-65535\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{itemize}
+\item
+  \textbf{Block 0} Enthält den Superblock, welcher nicht benutzt wird.
+\item
+  \textbf{Block 1-128} Enthält die DMAP in der abgelegt wird, welche
+  Blöcke frei oder belegt sind. Dabei wird entweder der Charakter F für
+  free, oder A für allocated an die Stelle des Datenblocks geschrieben.
+  Um alle 65.536 Blöcke über ein Byte abzubilden, muss dieser Bereich
+  128 Blöcke groß sein.
+\item
+  \textbf{Block 129-384} Enthält eine File Allocation Table (FAT) in der
+  an der Stelle einer Blocknummer die Nummer des darauf folgenden Blocks
+  abgelegt wird, welche die nächste Blocknummer beinhaltet. Beim letzten
+  Block wird eine 0 geschrieben. Da pro Blocknummer werden 2 Byte
+  benötigt werden, muss dieser Bereich 256 Blöcke groß sein.
+\item
+  \textbf{Block 385-448} Enthält das Rootverzeichnis mit Einträgen für
+  jede im Dateisystem gespeicherte Datei. Diese Einträge beinhalten den
+  Dateinamen, die Dateigröße, Benutzer/Gruppen-ID,
+  Zugriffsberechtigungen, Zeitstempel für den letzten
+  Zugriff/Veränderung/Statusänderung und den Zeiger auf den ersten
+  Datenblock. Pro Datei wird hier ein Block benutzt. Da in unserem
+  Dateisystem höchstens 64 Dateien Platz finden, wird dieser Bereich mit
+  64 Blöcken bemessen.
+\item
+  \textbf{Block 449-65.535} Datenblöcke für Dateien. Abhängig von der
+  Größe der Datei werden mehrere Blöcke verwendet.
+\end{itemize}
+
+\hypertarget{eigene-klassen-und-methoden}{%
+\subsubsection{2.2 Eigene Klassen und
+Methoden}\label{eigene-klassen-und-methoden}}
+
+Für jeden der oben genannten Sektoren wird eine eigene Klasse
+bereitgestellt. Diese Klassen haben Methoden für jegliche Interaktion
+mit dem Sektor und werden in \texttt{mkfs.myfs.cpp} und
+\texttt{myfs.cpp} verwendet.
+
+\hypertarget{dmap-methoden}{%
+\paragraph{2.2.1 DMAP-Methoden}\label{dmap-methoden}}
+
+\texttt{void\ DMAP::create()}
+
+Erstellt die DMAP, mit allen Bytes auf Free gesetzt.
+
+\texttt{int\ DMAP::getFree(uint16\_t\ *pos)}
+
+Kann verwendet werden um einen leeren Block aus der DMAP zu bekommen.
+
+\texttt{int\ DMAP::getFree(uint16\_t\ num,\ uint16\_t\ *arr)}
+
+Über diese Methode können mehrere freie Blöcke auf einmal erhalten
+werden.
+
+\texttt{void\ DMAP::allocate(uint16\_t\ pos)}
+
+Setzt einen bestimmten Block in der DMAP auf Allocated.
+
+\texttt{void\ DMAP::allocate(uint16\_t\ num,\ uint16\_t\ *arr)}
+
+Setzt mehrere Blöcke auf Allocated.
+
+\hypertarget{fat-methoden}{%
+\paragraph{2.2.2 FAT-Methoden}\label{fat-methoden}}
+
+\texttt{uint16\_t\ FAT::read(uint16\_t\ curAddress)}
+
+Liest die nächste Adresse aus der angegebenen Adresse.
+
+\texttt{void\ FAT::write(uint16\_t\ curAddress,\ uint16\_t\ nextAddress)}
+
+Schreibt die nächste Adresse an die angegebene Adresse.
+
+\hypertarget{dpsfile-struct}{%
+\paragraph{2.2.3 dpsFile-Struct}\label{dpsfile-struct}}
+
+Um alle Informationen zu einer Datei zu speichern, wird ein eigenes
+Struct verwendet, welches pro Datei im Rootverzeichnis gespeichert wird.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{struct}\NormalTok{ dpsFile \{}
+    \DataTypeTok{char}\NormalTok{ name[NAME_LENGTH]; }\CommentTok{// Name der Datei}
+    \KeywordTok{struct}\NormalTok{ stat stat;       }\CommentTok{// Stat-Struct}
+    \DataTypeTok{uint16_t}\NormalTok{ firstBlock;    }\CommentTok{// Addresse der ersten Datenblocks}
+\NormalTok{\};}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{rootdir-methoden}{%
+\paragraph{2.2.4 Rootdir-Methoden}\label{rootdir-methoden}}
+
+\texttt{int\ RootDir::get(const\ char\ *name,\ dpsFile\ *fileData)}
+
+Ruft die Dateiinformationen über den Dateiname ab.
+
+\texttt{int\ RootDir::exists(const\ char\ *name)}
+
+Prüft, ob eine Datei im Dateisystem vorhanden ist.
+
+\texttt{int\ RootDir::read(uint16\_t\ num,\ dpsFile\ *fileData)}
+
+Liest Dateiinformationen aus dem Rootverzeichnis für die Datei mit der
+Nummer \texttt{num}.
+
+\texttt{int\ RootDir::write(dpsFile\ *fileData)}
+
+Schreibt Dateiinformationen in das Rootverzeichnis. Wenn der gleiche
+Namen im Rootverzeichnis schon vorhanden ist, wird dieser überschrieben,
+sonst wird ein neuer Eintrag angelegt.
+
+\hypertarget{files-methoden}{%
+\paragraph{2.2.5 Files-Methoden}\label{files-methoden}}
+
+\texttt{int\ Files::read(uint16\_t\ *blocks,\ uint16\_t\ num,\ uint16\_t\ offset,\ char\ *buf)}
+
+Liest eine Anzahl \texttt{num} von Blöcken aus der Containerdatei.
+
+\texttt{int\ Files::write(uint16\_t\ *blocks,\ uint16\_t\ num,\ uint16\_t\ offset,\ size\_t\ size,\ const\ char\ *buf)}
+
+Schreibt eine Anzahl von Blöcken in die Containerdatei.
+
+\hypertarget{container-erstellung-und-befuxfcllung}{%
+\subsubsection{2.3 Container Erstellung und
+Befüllung}\label{container-erstellung-und-befuxfcllung}}
+
+Die Containerdatei wird mit einem Kommandos erstellt mit folgendem
+Aufbau: \texttt{mkfs.myfs\ containerfile\ {[}input-file\ ...{]}}. Die
+einzelnen Dateien zum Befüllen werden an den Befehl angehängt. Wenn
+keine Dateien angehängt werden, wird eine leere Containerdatei erzeugt.
+
+\hypertarget{einbinden-und-lesen}{%
+\subsubsection{2.4 Einbinden und Lesen}\label{einbinden-und-lesen}}
+
+Das Einbinden des Dateisystems erfolgt durch das Kommando
+\texttt{mount.myfs\ container\ logfile\ mountdir\ -s}. Der Parameter
+\texttt{-s} steht für Single-Threaded-Mode, der verwendet werden soll um
+potentielle Fehler zu vermeiden, die durch Multithreading auftreten
+können. Im Template wurde uns das Programm \texttt{mount.myfs}
+übergeben, welches sicherstellt, dass das Kommando die richtige Syntax
+befolgt und benötigten Dateien die Voraussetzungen erfüllen. Sofern der
+Zugriff auf den Container und die Logdatei erfolgreich war und ein
+Mountpoint existiert, kann die Initialisierung erfolgen.
+
+\hypertarget{fuse-methoden}{%
+\paragraph{2.4.1 FUSE-Methoden}\label{fuse-methoden}}
+
+\texttt{*MyFS::fuseInit}
+
+Öffnet die Logdatei und Containerdatei. Danach werden alle
+Container-Objekte (DMAP, FAT, Root-Ordner und Dateien) erstellt.
+
+\texttt{MyFS::fuseReaddir}
+
+In der Methode muss für jeden Eintrag im Verzeichnis die übergebene
+Funktion \texttt{filler} aufgerufen werden. Erst wird das für die
+Einträge \texttt{.} und \texttt{..} getan. Diese stehen für das aktuelle
+und das darüberliegende Verzeichnis. Dann wird über alle Dateien im
+Rootberzeichnis iteriert und deren Namen an den filler übergeben.
+
+\texttt{MyFS::fuseGetattr}
+
+Befüllt statbuf mit Attributen aus dem Eintrag des Rootverzeichnis. Wenn
+die angefragte Datei nicht existiert wird \texttt{-ENOENT}
+zurückgegeben. Bei der Abfrage des Rootverzeichnisses selbst wird das
+Stat-Struct mit den Werten:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{st_uid = getuid();        }\CommentTok{// UID des aktuellen Nutzers}
+\NormalTok{st_gid = getgid();        }\CommentTok{// GID des aktuellen Nutzers}
+\NormalTok{st_atime = time(NULL);    }\CommentTok{// alle Zeiten auf den aktuellen Zeitstempel}
+\NormalTok{st_mtime = time(NULL);    }\CommentTok{// "}
+\NormalTok{st_ctime = time(NULL);    }\CommentTok{// "}
+\NormalTok{st_mode = S_IFDIR | }\DecValTok{0555}\NormalTok{; }\CommentTok{// Zugriffsberechtigungen auf 0555}
+\NormalTok{st_nlink = }\DecValTok{2}\NormalTok{;             }\CommentTok{// Anzahl der Links auf 2}
+\NormalTok{st_size = }\DecValTok{4096}\NormalTok{;           }\CommentTok{// Größe in Bytes auf 4096}
+\NormalTok{st_blocks = }\DecValTok{8}\NormalTok{;            }\CommentTok{// Anzahl der 512 Byte Blöcke auf 8}
+\end{Highlighting}
+\end{Shaded}
+
+befüllt.
+
+\texttt{MyFS::fuseOpen}
+
+Öffnet eine Datei zum lesen oder schreiben. Beim Aufruf der Methode wird
+die Anzahl der offenen Dateien um eins erhöht und das Structfeld
+\texttt{fuse\_file\_info-\textgreater{}fh} wird mit dem Zeiger auf den
+Ersten Datenblock der Datei beschrieben.
+
+\texttt{MyFS::fuseRead}
+
+Diese Methode wird immer direkt nach dem erfolgreichen fuseOpen
+aufgerufen. Das übergebene Struct \texttt{fuse\_file\_info} beinhaltet
+den vorher gespeicherten Filehandle. Nun können über die FAT alle
+Blocknummern abgefragt und ausgelesen. Die gelesenen Bytes werden in den
+Puffer \texttt{buf} kopiert und die Anzahl zurückgegeben.
+
+\texttt{MyFS::fuseRelease}
+
+Wird beim schließen einer Datei aufgerufen. Die Anzahl der offenen
+Dateien wird um eins reduziert und alle \texttt{toFile} Methoden der
+Container-Objekte werden aufgerufen.
+
+\hypertarget{read-and-write-filesystem}{%
+\subsection{3 Read and Write
+Filesystem}\label{read-and-write-filesystem}}
+
+\hypertarget{erstellen-und-luxf6schen-von-dateien}{%
+\subsubsection{3.1 Erstellen und Löschen von
+Dateien}\label{erstellen-und-luxf6schen-von-dateien}}
+
+\hypertarget{eigene-klassen-und-methoden-1}{%
+\paragraph{3.1.1 Eigene Klassen und
+Methoden}\label{eigene-klassen-und-methoden-1}}
+
+Für das löschen von Dateien mussten die Klassen \texttt{DMAP} und
+\texttt{RootDir} um Methoden erweitert werden.
+
+\texttt{void\ DMAP::setFree(uint16\_t\ pos)}
+
+Setzt einen Block auf ``Free''.
+
+\texttt{int\ RootDir::del(const\ char\ *name)}
+
+Löscht den Eintrag aus dem Bootverzeichnis.
+
+\newpage
+
+\hypertarget{fuse-methoden-1}{%
+\paragraph{3.1.2 FUSE-Methoden}\label{fuse-methoden-1}}
+
+\texttt{MyFS::fuseMknod}
+
+Wird nur dann aufgerufen wenn die Methode \texttt{MyFS::fuseGetattr} den
+Fehlercode \texttt{-ENOENT} zurück gibt. Beim erstellen einer neuen
+Datei wird der gewünschte Name und die Zugriffsberechtigungen übergeben.
+Die Restlichen Filestats werden mit den Werten:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{st_blksize = }\DecValTok{512}\NormalTok{;}
+\NormalTok{st_size = }\DecValTok{0}\NormalTok{;}
+\NormalTok{st_blocks = }\DecValTok{0}\NormalTok{;}
+\NormalTok{st_nlink = }\DecValTok{1}\NormalTok{;}
+\NormalTok{st_atime = time(NULL);}
+\NormalTok{st_mtime = time(NULL);}
+\NormalTok{st_ctime = time(NULL);}
+\NormalTok{st_uid = getgid();}
+\NormalTok{st_gid = getuid();}
+\end{Highlighting}
+\end{Shaded}
+
+befüllt.
+
+\texttt{MyFS::fuseWrite}
+
+Schreibt vom \texttt{offset} bis \texttt{offset+size} den Inhalt aus dem
+Puffer \texttt{buf} in eine Datei. Dabei wird zuerst ermittelt ob neue
+Blöcke für den Schreibvorgang nötig sind oder ob die vorhandenen Blöcke
+überschrieben werden. Wenn neue Blöcke verwendet werden, werden diese in
+der FAT an die vorhandenen Blöcke angehängt. Nach dem Schreiben werden
+die Filestats \texttt{st\_size} und \texttt{st\_blocks} auf die neue
+Größe und \texttt{st\_mtime} und \texttt{st\_ctime} auf den aktuellen
+Timestamp angepasst. Sollte der Schreibvorgang nicht möglich sein, weil
+keinen Platz im Dateisystem vorhanden ist, wird der Fehlercode
+\texttt{-ENOSPC} zurückgegeben.
+
+\texttt{MyFS::fuseUnlink}
+
+Entfernt eine Datei indem der Eintrag im Rootverzeichnis gelöscht wird
+und die entsprechenden Datenblöcke in der DMAP freigegeben werden.
+
+\hypertarget{testfuxe4lle}{%
+\subsection{4. Testfälle}\label{testfuxe4lle}}
+
+\hypertarget{testen-des-containers}{%
+\subsubsection{4.1 Testen des Containers}\label{testen-des-containers}}
+
+Das Testen der Containerdatei, also das Testen des Erzeugens und
+Befüllens der Containerdatei erfolgt ohne jegliche Abhängigkeit zu FUSE.
+Dadurch konnte das Testen bereits parallel zum Schreiben des Codes für
+die anderen Aufgabenstellungen erfolgen. Die Testcases sind mit dem
+Testframework ``Catch'' geschrieben.
+
+\newpage
+
+\hypertarget{test-dmap}{%
+\paragraph{4.1.2 Test-DMAP}\label{test-dmap}}
+
+In diesem Testcase werden die Methoden der DMAP-Klasse getestet. Erst
+die, die einzelne Blöcke zurückgeben und diese allokieren und dann die,
+die mehrere Blöcke aus der DMAP zurückgeben und allokieren können.
+
+\hypertarget{test-fat}{%
+\paragraph{4.1.1 Test-FAT}\label{test-fat}}
+
+Diese Tests überprüfen ob alle Lese- und Schreib-Methoden der Fat-Klasse
+funktionieren.
+
+\hypertarget{testen-der-fuse-operationen}{%
+\subsubsection{4.2 Testen der Fuse
+Operationen}\label{testen-der-fuse-operationen}}
+
+Die Fuse Operationen wurden mit \texttt{Bash}-Scripten ausführlich
+getestet. Dabei werden Linux-Commands ausgeführt und der Exit-Code
+dieser überprüft:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\OperatorTok{<}\BuiltInTok{command}\OperatorTok{>}
+\KeywordTok{if}\BuiltInTok{ [} \VariableTok{$?} \OtherTok{-eq}\NormalTok{ 0}\BuiltInTok{ ]}\NormalTok{; }\KeywordTok{then}
+\BuiltInTok{echo}\NormalTok{ -e }\StringTok{"command successful"}
+\KeywordTok{else}
+\BuiltInTok{echo}\NormalTok{ -e }\StringTok{"command failed"}
+\KeywordTok{fi}
+\end{Highlighting}
+\end{Shaded}
+
+\texttt{read.sh}
+
+Das Skript erstellt eine Containerdatei und übergibt dabei eine
+Testdatei. Dann wird die Containerdatei gemountet und die Datei über
+\texttt{diff} mit dem Original verglichen.
+
+\texttt{write.sh}
+
+Mit diesem Script werden verschiedene Schreiboperationen getestet: -
+Anlegen einer leeren Datei - Beschreiben der Datei - Text anhängen -
+Datei überschreiben
+
+\texttt{delete.sh}
+
+Dieses Script testet die unlink Methode. Dazu wird eine Datei angelegt
+und gleich wieder gelöscht.
+
+\newpage
+
+\hypertarget{optimierungen}{%
+\subsection{5. Optimierungen}\label{optimierungen}}
+
+Beim ersten programmieren der Container-Klassen haben alle Methoden
+immer direkt die Daten aus der Containerdatei gelesen und geschrieben.
+Das hatte zufolge, dass Lese und Schreiboperationen bei großen Dateien
+lange gedauert haben. Um das zu beschleunigen wurden für die Klassen
+\texttt{DMAP}, \texttt{FAT} und \texttt{RootDir} jeweils ein Array
+angelegt, welches im Konstruktor aus der Containerdatei befüllt und
+durch den Aufruf der \texttt{toFile} Methode in die Container
+zurückgeschrieben wird.
+
+Dadurch konnte die Zeit, die zum Schreiben von 30 MB gebraucht wird um
+das 42-Fache reduziert werden.
+
+\end{document}
