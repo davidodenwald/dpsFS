@@ -177,13 +177,20 @@ Dateien übrig bleibt. Alle Dateien, die sich im Dateisystem befinden
 sollen sich im Rootverzeichnis befinden und es soll keine weiteren
 Verzeichnisse geben.
 
-Als Konstanten wurde festgelegt: - Die maximal Länge eines Dateinamens
-\texttt{NAME\_LENGTH} auf 255 Charaktere. - Die logische Blockgröße
-\texttt{BLOCK\_SIZE} mit 512 Byte. - Die maximale Anzahl an
-Verzeichniseinträgen \texttt{NUM\_DIR\_ENTRIES} mit 64. - Die Anzahl der
-maximal geöffneten Dateien \texttt{NUM\_OPEN\_FILES} mit ebenfalls 64.
+Als Konstanten wurden festgelegt: 
+\begin{itemize}
+  \tightlist
+  \item
+    Die maximale Länge eines Dateinamens \texttt{NAME\_LENGTH} auf 255 Charaktere. 
+  \item 
+    Die logische Blockgröße \texttt{BLOCK\_SIZE} mit 512 Byte. 
+  \item 
+    Die maximale Anzahl an Verzeichniseinträgen \texttt{NUM\_DIR\_ENTRIES} mit 64. 
+  \item   
+  - Die Anzahl der maximal geöffneten Dateien \texttt{NUM\_OPEN\_FILES} mit ebenfalls 64.
+\end{itemize}
 
-Die Übung soll von 2-4 Studenten durchgeführt werden.
+Die Übung soll von zwei bis vier Studenten durchgeführt werden.
 
 Zur Bearbeitung des Projektes wurde ein Template bereitgestellt, welches
 folgendes beinhaltet:
@@ -208,7 +215,7 @@ Aufbau}\label{container-datei-aufbau}}
 
 Grundbestandteil des Dateisystems ist die Erstellung der Containerdatei
 und diese anschließend zu befüllen. Die Containerdatei muss mindestens
-eine Größe von 30 MB besitzen und wird in 512 Byte große Blöcke
+eine Größe von 30 MB besitzen und wird in 512 Byte Blöcke
 aufgeteilt. Maximal sollen bis zu 64 Dateien gespeichert werden können.
 Als Gesamtgröße wählten wir 33.324.544 Bytes (32 MB) welche 65.536
 Blöcke entsprechen. Das hat den Vorteil, dass wir über ein
@@ -283,11 +290,11 @@ werden.
 
 \texttt{void\ DMAP::allocate(uint16\_t\ pos)}
 
-Setzt einen bestimmten Block in der DMAP auf Allocated.
+Setzt einen bestimmten Block in der DMAP auf allocated.
 
 \texttt{void\ DMAP::allocate(uint16\_t\ num,\ uint16\_t\ *arr)}
 
-Setzt mehrere Blöcke auf Allocated.
+Setzt mehrere Blöcke auf allocated.
 
 \hypertarget{fat-methoden}{%
 \paragraph{2.2.2 FAT-Methoden}\label{fat-methoden}}
@@ -323,7 +330,7 @@ Struct verwendet, welches pro Datei im Rootverzeichnis gespeichert wird.
 
 \texttt{int\ RootDir::get(const\ char\ *name,\ dpsFile\ *fileData)}
 
-Ruft die Dateiinformationen über den Dateiname ab.
+Ruft die Dateiinformationen über den Dateinamen ab.
 
 \texttt{int\ RootDir::exists(const\ char\ *name)}
 
@@ -416,7 +423,7 @@ befüllt.
 
 \texttt{MyFS::fuseOpen}
 
-Öffnet eine Datei zum lesen oder schreiben. Beim Aufruf der Methode wird
+Öffnet eine Datei zum Lesen oder Schreiben. Beim Aufruf der Methode wird
 die Anzahl der offenen Dateien um eins erhöht und das Structfeld
 \texttt{fuse\_file\_info-\textgreater{}fh} wird mit dem Zeiger auf den
 Ersten Datenblock der Datei beschrieben.
@@ -431,7 +438,7 @@ Puffer \texttt{buf} kopiert und die Anzahl zurückgegeben.
 
 \texttt{MyFS::fuseRelease}
 
-Wird beim schließen einer Datei aufgerufen. Die Anzahl der offenen
+Wird beim Schließen einer Datei aufgerufen. Die Anzahl der offenen
 Dateien wird um eins reduziert und alle \texttt{toFile} Methoden der
 Container-Objekte werden aufgerufen.
 
@@ -456,7 +463,7 @@ Setzt einen Block auf ``Free''.
 
 \texttt{int\ RootDir::del(const\ char\ *name)}
 
-Löscht den Eintrag aus dem Bootverzeichnis.
+Löscht den Eintrag aus dem Rootverzeichnis.
 
 
 \hypertarget{fuse-methoden-1}{%
@@ -465,9 +472,9 @@ Löscht den Eintrag aus dem Bootverzeichnis.
 \texttt{MyFS::fuseMknod}
 
 Wird nur dann aufgerufen wenn die Methode \texttt{MyFS::fuseGetattr} den
-Fehlercode \texttt{-ENOENT} zurück gibt. Beim erstellen einer neuen
+Fehlercode \texttt{-ENOENT} zurück gibt. Beim Erstellen einer neuen
 Datei wird der gewünschte Name und die Zugriffsberechtigungen übergeben.
-Die Restlichen Filestats werden mit den Werten:
+Die restlichen Filestats werden mit den Werten:
 
 \begin{Shaded}
   \begin{framed}
@@ -496,8 +503,8 @@ Blöcke für den Schreibvorgang nötig sind oder ob die vorhandenen Blöcke
 der FAT an die vorhandenen Blöcke angehängt. Nach dem Schreiben werden
 die Filestats \texttt{st\_size} und \texttt{st\_blocks} auf die neue
 Größe und \texttt{st\_mtime} und \texttt{st\_ctime} auf den aktuellen
-Timestamp angepasst. Sollte der Schreibvorgang nicht möglich sein, weil
-keinen Platz im Dateisystem vorhanden ist, wird der Fehlercode
+Zeitstempel angepasst. Sollte der Schreibvorgang nicht möglich sein, weil
+kein Platz im Dateisystem vorhanden ist, wird der Fehlercode
 \texttt{-ENOSPC} zurückgegeben.
 
 \texttt{MyFS::fuseUnlink}
@@ -511,7 +518,7 @@ und die entsprechenden Datenblöcke in der DMAP freigegeben werden.
 \hypertarget{testen-des-containers}{%
 \subsubsection{4.1 Testen des Containers}\label{testen-des-containers}}
 
-Das Testen der Containerdatei, also das Testen des Erzeugens und
+Das Testen des Erzeugens und
 Befüllens der Containerdatei erfolgt ohne jegliche Abhängigkeit zu FUSE.
 Dadurch konnte das Testen bereits parallel zum Schreiben des Codes für
 die anderen Aufgabenstellungen erfolgen. Die Testcases sind mit dem
@@ -520,9 +527,8 @@ Testframework ``Catch'' geschrieben.
 \hypertarget{test-dmap}{%
 \paragraph{4.1.2 Test-DMAP}\label{test-dmap}}
 
-In diesem Testcase werden die Methoden der DMAP-Klasse getestet. Erst
-die, die einzelne Blöcke zurückgeben und diese allokieren und dann die,
-die mehrere Blöcke aus der DMAP zurückgeben und allokieren können.
+In diesem Testcase werden die Methoden der DMAP-Klasse getestet. Erst werden einzelne Blöcke zurückgegeben und allokiert und dann
+werden mehrere Blöcke aus der DMAP zurückgegeben und ebenfalls allokiert.
 
 \hypertarget{test-fat}{%
 \paragraph{4.1.1 Test-FAT}\label{test-fat}}
@@ -571,16 +577,16 @@ und gleich wieder gelöscht.
 \hypertarget{optimierungen}{%
 \subsection{5. Optimierungen}\label{optimierungen}}
 
-Beim ersten programmieren der Container-Klassen haben alle Methoden
+Beim ersten Programmieren der Container-Klassen haben alle Methoden
 immer direkt die Daten aus der Containerdatei gelesen und geschrieben.
-Das hatte zufolge, dass Lese und Schreiboperationen bei großen Dateien
+Das hatte zufolge, dass Lese- und Schreiboperationen bei großen Dateien
 lange gedauert haben. Um das zu beschleunigen wurden für die Klassen
 \texttt{DMAP}, \texttt{FAT} und \texttt{RootDir} jeweils ein Array
 angelegt, welches im Konstruktor aus der Containerdatei befüllt und
 durch den Aufruf der \texttt{toFile} Methode in die Container
 zurückgeschrieben wird.
 
-Dadurch konnte die Zeit, die zum Schreiben von 30 MB gebraucht wird um
-das 42-Fache reduziert werden.
+Dadurch konnte die Zeit, die zum Schreiben von 30 MB gebraucht wird, um
+das 42-fache reduziert werden.
 
 \end{document}
