@@ -5,6 +5,7 @@ make unittest
 
 ./unittest
 
+mkdir mountdir
 fusermount --unmount mountdir > /dev/null 2>&1
 
 ./testscripts/read.sh
