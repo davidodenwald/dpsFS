@@ -433,10 +433,6 @@ void *MyFS::fuseInit(struct fuse_conn_info *conn) {
         this->fat = new FAT(this->blockDev);
         this->rootDir = new RootDir(this->blockDev);
         this->files = new Files(this->blockDev);
-
-        for (uint16_t block = 449; block != 0; block = this->fat->read(block)) {
-            LOGF("%d\n", block);
-        }
     }
     RETURN(0);
 }
