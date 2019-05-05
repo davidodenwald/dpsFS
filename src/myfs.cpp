@@ -319,6 +319,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size,
     this->rootDir->write(tmpFile);
 
     free(blocks);
+    free(tmpFile);
     RETURN((int)size);
 }
 
