@@ -141,7 +141,8 @@ int MyFS::fuseUnlink(const char *path) {
     this->rootDir->get(basename(strdup(path)), file);
 
     this->dmap->setFree(file->firstBlock);
-    for (int tmpBlock = file->firstBlock; tmpBlock != 0; tmpBlock = fat->read(tmpBlock)) {
+    for (int tmpBlock = file->firstBlock; tmpBlock != 0;
+         tmpBlock = fat->read(tmpBlock)) {
         this->dmap->setFree(tmpBlock);
     }
 
@@ -182,6 +183,39 @@ int MyFS::fuseChown(const char *path, uid_t uid, gid_t gid) {
 
 int MyFS::fuseTruncate(const char *path, off_t newSize) {
     LOGM();
+    LOGF("path: %s; newSize: %lu;", path, newSize);
+
+    dpsFile *file = (dpsFile *)malloc(BD_BLOCK_SIZE);
+    this->rootDir->get(basename(strdup(path)), file);
+
+    int blocksRemain;
+    if (newSize % BD_BLOCK_SIZE == 0) {
+        blocksRemain = newSize / BD_BLOCK_SIZE;
+    } else {
+        blocksRemain = newSize / BD_BLOCK_SIZE + 1;
+    }
+
+    int *blocks = (int *)malloc(file->stat.st_blocks * sizeof(int));
+    int i = 0;
+    for (int tmpBlock = file->firstBlock; tmpBlock != 0;
+         tmpBlock = fat->read(tmpBlock)) {
+        blocks[i] = tmpBlock;
+        i++;
+    }
+
+    for(; i >= blocksRemain; i--) {
+        this->dmap->setFree(blocks[i]);
+        this->fat->write(blocks[i], 0);
+    }
+
+    file->stat.st_size = newSize;
+    file->stat.st_blocks = blocksRemain;
+    file->stat.st_mtime = time(NULL);
+    file->stat.st_ctime = time(NULL);
+    this->rootDir->write(file);
+
+    free(blocks);
+    free(file);
     return 0;
 }
 
